@@ -1,0 +1,15 @@
+1- Criar um projeto em laravel arquitetura mvc;
+2- criar as migrations para banco postresql;
+3- criar os models:
+    users: nome, email, telefone, password;
+    clientes: nome;
+    status:id, nome;
+    demandas: data, cliente_id, user_id, modulo, descricao, status_id, observacao;
+
+4- gerar os controllers, rotas de crud, autenticacao;
+5- criar interface de login;
+6- criar crud de clientes;
+7-criar crud de status;
+8-criar crud de demandas;
+9- criar dashboard de totais de demandas por status;
+10-criar gerador de relatorios em pdf das demandas;
