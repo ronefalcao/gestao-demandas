@@ -1,7 +1,7 @@
 services:
   demandas:
     build:
-      context: ./app
+      context: ./
     container_name: demandas
     ports:
       - '8003:8003'
