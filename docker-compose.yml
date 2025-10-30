@@ -1,0 +1,13 @@
+services:
+  demandas:
+    build:
+      context: .
+    image: laravel-app
+    container_name: demandas
+    ports:
+      - '8003:8000'
+    volumes:
+      - .:/var/www
+    working_dir: /var/www
+    command: sh -c "php artisan migrate &&  php artisan serve --host=0.0.0.0 --port=8000"
+
