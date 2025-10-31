@@ -15,14 +15,26 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        // Base query para filtragem por tipo de usuário
+        // Base query para filtragem por tipo de usuário e projetos associados
         $baseQuery = Demanda::query();
 
-        // Usuário comum só vê suas próprias demandas
-        if ($user->isUsuario()) {
-            $baseQuery->where('solicitante_id', $user->id);
+        if ($user->isAdmin()) {
+            // Admin vê todas as demandas
+        } else {
+            // Usuários não-admin só veem demandas dos projetos aos quais estão associados
+            $projetosIds = $user->projetos()->pluck('projetos.id');
+            if ($projetosIds->isEmpty()) {
+                // Se o usuário não tem projetos associados, não mostrar nenhuma demanda
+                $baseQuery->whereRaw('1 = 0'); // Query que sempre retorna vazio
+            } else {
+                $baseQuery->whereIn('projeto_id', $projetosIds);
+
+                // Usuário comum só vê suas próprias demandas (que ele criou)
+                if ($user->isUsuario()) {
+                    $baseQuery->where('solicitante_id', $user->id);
+                }
+            }
         }
-        // Admin e Gestor veem todas as demandas
 
         $statuses = Status::where('nome', '!=', 'Cancelada')->get();
         $totais = [];
@@ -38,10 +50,16 @@ class DashboardController extends Controller
 
         $totalDemandas = $baseQuery->count();
 
-        // Totais gerais do sistema (só Admin/Gestor veem)
-        $totalUsuarios = User::count();
-        $totalProjetos = Projeto::where('ativo', true)->count();
-        $totalClientes = Cliente::count();
+        // Totais gerais do sistema
+        if ($user->isAdmin()) {
+            $totalUsuarios = User::count();
+            $totalProjetos = Projeto::where('ativo', true)->count();
+            $totalClientes = Cliente::count();
+        } else {
+            $totalUsuarios = 0;
+            $totalProjetos = $user->projetos()->where('ativo', true)->count();
+            $totalClientes = 0;
+        }
 
         $recentesQuery = clone $baseQuery;
         $demandasRecentes = $recentesQuery->with(['cliente', 'projeto', 'solicitante', 'responsavel', 'status'])

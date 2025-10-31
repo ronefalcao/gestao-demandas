@@ -27,7 +27,8 @@
                 </div>
                 <div class="col-md-6">
                     <p><strong>Tipo:</strong>
-                        <span class="badge {{ $user->tipo === 'administrador' ? 'bg-danger' : ($user->tipo === 'gestor' ? 'bg-warning' : 'bg-primary') }}">
+                        <span
+                            class="badge {{ $user->tipo === 'administrador' ? 'bg-danger' : ($user->tipo === 'gestor' ? 'bg-warning' : 'bg-primary') }}">
                             {{ ucfirst($user->tipo) }}
                         </span>
                     </p>
@@ -40,6 +41,28 @@
                 </div>
                 <div class="col-md-6">
                     <p><strong>Atualizado em:</strong> {{ $user->updated_at->format('d/m/Y H:i') }}</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <p><strong>Projetos Associados:</strong></p>
+                    @if ($user->isAdmin())
+                        <span class="badge bg-info">Acesso a todos os projetos</span>
+                    @else
+                        @php
+                            $user->load('projetos');
+                        @endphp
+                        @if ($user->projetos->count() > 0)
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach ($user->projetos as $projeto)
+                                    <span class="badge bg-primary">{{ $projeto->nome }}</span>
+                                @endforeach
+                            </div>
+                        @else
+                            <span class="text-muted">Nenhum projeto associado</span>
+                        @endif
+                    @endif
                 </div>
             </div>
 

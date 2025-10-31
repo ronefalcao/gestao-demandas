@@ -79,4 +79,12 @@ class User extends Authenticatable
     {
         return $this->isAdmin();
     }
+
+    /**
+     * Relacionamento muitos-para-muitos com projetos
+     */
+    public function projetos()
+    {
+        return $this->belongsToMany(Projeto::class, 'projeto_user');
+    }
 }

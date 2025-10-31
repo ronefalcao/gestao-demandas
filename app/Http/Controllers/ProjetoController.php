@@ -9,7 +9,15 @@ class ProjetoController extends Controller
 {
     public function index()
     {
-        $projetos = Projeto::orderBy('nome')->paginate(15);
+        $user = auth()->user();
+
+        // Admin vê todos os projetos, outros usuários veem apenas os associados
+        if ($user->isAdmin()) {
+            $projetos = Projeto::orderBy('nome')->paginate(15);
+        } else {
+            $projetos = $user->projetos()->orderBy('nome')->paginate(15);
+        }
+
         return view('projetos.index', compact('projetos'));
     }
 

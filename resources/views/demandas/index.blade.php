@@ -103,10 +103,30 @@
                                     <a href="{{ route('demandas.show', $demanda) }}" class="btn btn-sm btn-info">
                                         <i class="bi bi-eye"></i>
                                     </a>
+                                    @php
+                                        $user = auth()->user();
+                                        $statusConcluido = $demanda->status->nome === 'Concluído';
+                                        $podeEditar = !$user->isUsuario() || ($user->isUsuario() && $statusConcluido);
+                                    @endphp
+                                    @if ($podeEditar)
+                                        @if ($user->isUsuario() && $statusConcluido)
+                                            <form action="{{ route('demandas.homologar', $demanda) }}" method="POST"
+                                                class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-success"
+                                                    title="Homologar demanda"
+                                                    onclick="return confirm('Deseja realmente homologar esta demanda?')">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <a href="{{ route('demandas.edit', $demanda) }}" class="btn btn-sm btn-warning"
+                                                title="Editar demanda">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        @endif
+                                    @endif
                                     @if (!auth()->user()->isUsuario())
-                                        <a href="{{ route('demandas.edit', $demanda) }}" class="btn btn-sm btn-warning">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
                                         <form action="{{ route('demandas.destroy', $demanda) }}" method="POST"
                                             class="d-inline">
                                             @csrf

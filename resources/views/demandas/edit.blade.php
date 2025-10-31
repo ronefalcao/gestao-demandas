@@ -10,6 +10,12 @@
         </a>
     </div>
 
+    @if (isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida)
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Você está homologando esta demanda. Apenas o status pode ser alterado.
+        </div>
+    @endif
+
     <div class="card">
         <div class="card-body">
             <form method="POST" action="{{ route('demandas.update', $demanda) }}">
@@ -19,7 +25,8 @@
                     <div class="col-md-6">
                         <label for="data" class="form-label">Data</label>
                         <input type="date" class="form-control @error('data') is-invalid @enderror" id="data"
-                            name="data" value="{{ old('data', $demanda->data->format('Y-m-d')) }}" required>
+                            name="data" value="{{ old('data', $demanda->data->format('Y-m-d')) }}"
+                            {{ isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida ? 'readonly' : 'required' }}>
                         @error('data')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -28,7 +35,8 @@
                     <div class="col-md-6">
                         <label for="cliente_id" class="form-label">Cliente</label>
                         <select class="form-select @error('cliente_id') is-invalid @enderror" id="cliente_id"
-                            name="cliente_id" required>
+                            name="cliente_id"
+                            {{ isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida ? 'disabled' : 'required' }}>
                             <option value="">Selecione um cliente</option>
                             @foreach ($clientes as $cliente)
                                 <option value="{{ $cliente->id }}"
@@ -37,6 +45,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @if (isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida)
+                            <input type="hidden" name="cliente_id" value="{{ $demanda->cliente_id }}">
+                        @endif
                         @error('cliente_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -47,7 +58,8 @@
                     <div class="col-md-6">
                         <label for="solicitante_id" class="form-label">Solicitante</label>
                         <select class="form-select @error('solicitante_id') is-invalid @enderror" id="solicitante_id"
-                            name="solicitante_id" required>
+                            name="solicitante_id"
+                            {{ isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida ? 'disabled' : 'required' }}>
                             <option value="">Selecione um solicitante</option>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}"
@@ -56,6 +68,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @if (isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida)
+                            <input type="hidden" name="solicitante_id" value="{{ $demanda->solicitante_id }}">
+                        @endif
                         @error('solicitante_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -64,7 +79,8 @@
                     <div class="col-md-6">
                         <label for="responsavel_id" class="form-label">Responsável (Opcional)</label>
                         <select class="form-select @error('responsavel_id') is-invalid @enderror" id="responsavel_id"
-                            name="responsavel_id">
+                            name="responsavel_id"
+                            {{ isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida ? 'disabled' : '' }}>
                             <option value="">Selecione um responsável</option>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}"
@@ -73,6 +89,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @if (isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida)
+                            <input type="hidden" name="responsavel_id" value="{{ $demanda->responsavel_id ?? '' }}">
+                        @endif
                         @error('responsavel_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -83,7 +102,8 @@
                     <div class="col-md-6">
                         <label for="projeto_id" class="form-label">Projeto</label>
                         <select class="form-select @error('projeto_id') is-invalid @enderror" id="projeto_id"
-                            name="projeto_id" required>
+                            name="projeto_id"
+                            {{ isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida ? 'disabled' : 'required' }}>
                             <option value="">Selecione um projeto</option>
                             @foreach ($projetos as $projeto)
                                 <option value="{{ $projeto->id }}"
@@ -92,6 +112,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @if (isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida)
+                            <input type="hidden" name="projeto_id" value="{{ $demanda->projeto_id }}">
+                        @endif
                         @error('projeto_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -100,7 +123,8 @@
                     <div class="col-md-6">
                         <label for="modulo" class="form-label">Módulo</label>
                         <input type="text" class="form-control @error('modulo') is-invalid @enderror" id="modulo"
-                            name="modulo" value="{{ old('modulo', $demanda->modulo) }}" required>
+                            name="modulo" value="{{ old('modulo', $demanda->modulo) }}"
+                            {{ isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida ? 'readonly' : 'required' }}>
                         @error('modulo')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -129,7 +153,7 @@
                 <div class="mb-3">
                     <label for="descricao" class="form-label">Descrição</label>
                     <textarea class="form-control @error('descricao') is-invalid @enderror" id="descricao" name="descricao" rows="5"
-                        required>{{ old('descricao', $demanda->descricao) }}</textarea>
+                        {{ isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida ? 'readonly' : 'required' }}>{{ old('descricao', $demanda->descricao) }}</textarea>
                     @error('descricao')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -138,7 +162,7 @@
                 <div class="mb-3">
                     <label for="observacao" class="form-label">Observação</label>
                     <textarea class="form-control @error('observacao') is-invalid @enderror" id="observacao" name="observacao"
-                        rows="3">{{ old('observacao', $demanda->observacao) }}</textarea>
+                        rows="3" {{ isset($isUsuarioEditandoConcluida) && $isUsuarioEditandoConcluida ? 'readonly' : '' }}>{{ old('observacao', $demanda->observacao) }}</textarea>
                     @error('observacao')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
