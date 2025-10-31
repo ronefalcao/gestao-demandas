@@ -12,6 +12,7 @@ class Demanda extends Model
     protected $fillable = [
         'data',
         'cliente_id',
+        'projeto_id',
         'solicitante_id',
         'responsavel_id',
         'modulo',
@@ -27,6 +28,11 @@ class Demanda extends Model
     public function cliente()
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    public function projeto()
+    {
+        return $this->belongsTo(Projeto::class);
     }
 
     public function solicitante()

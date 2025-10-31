@@ -64,6 +64,7 @@
             <tr>
                 <th>Data</th>
                 <th>Cliente</th>
+                <th>Projeto</th>
                 <th>Módulo</th>
                 <th>Descrição</th>
                 <th>Status</th>
@@ -76,15 +77,16 @@
                 <tr>
                     <td>{{ $demanda->data->format('d/m/Y') }}</td>
                     <td>{{ $demanda->cliente->nome }}</td>
+                    <td>{{ $demanda->projeto ? $demanda->projeto->nome : '-' }}</td>
                     <td>{{ $demanda->modulo }}</td>
                     <td>{{ $demanda->descricao }}</td>
                     <td>{{ $demanda->status->nome }}</td>
                     <td>{{ $demanda->solicitante->nome }}</td>
-                    <td>{{ $demanda->responsavel->nome }}</td>
+                    <td>{{ $demanda->responsavel ? $demanda->responsavel->nome : 'N/A' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align: center;">Nenhuma demanda encontrada</td>
+                    <td colspan="8" style="text-align: center;">Nenhuma demanda encontrada</td>
                 </tr>
             @endforelse
         </tbody>

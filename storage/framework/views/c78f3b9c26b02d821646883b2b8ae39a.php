@@ -12,6 +12,15 @@
         .sidebar {
             min-height: 100vh;
             background: #2c3e50;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
         }
 
         .sidebar .nav-link {
@@ -29,14 +38,82 @@
             background: #f8f9fa;
             min-height: 100vh;
         }
+
+        /* Botão hamburger */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background: #2c3e50;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Overlay para fechar menu ao clicar fora */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* Ajustes para mobile */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                width: 260px;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+
+        /* Desktop: mostrar sidebar sempre */
+        @media (min-width: 992px) {
+            .sidebar {
+                position: relative;
+                transform: translateX(0) !important;
+            }
+
+            .main-content {
+                margin-left: auto;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <!-- Botão hamburger -->
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Overlay para fechar menu -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 sidebar p-0">
+            <nav class="col-md-3 col-lg-2 sidebar p-0 hidden" id="sidebar">
                 <div class="p-3 text-white">
                     <h4>Sistema de Demandas</h4>
                 </div>
@@ -65,6 +142,12 @@
                                 <a class="nav-link <?php if(request()->routeIs('clientes.*')): ?> active <?php endif; ?>"
                                     href="<?php echo e(route('clientes.index')); ?>">
                                     <i class="bi bi-people"></i> Clientes
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?php if(request()->routeIs('projetos.*')): ?> active <?php endif; ?>"
+                                    href="<?php echo e(route('projetos.index')); ?>">
+                                    <i class="bi bi-folder"></i> Projetos
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -121,6 +204,40 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle do menu mobile
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('hidden');
+            overlay.classList.toggle('active');
+        }
+
+        menuToggle.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', toggleMenu);
+
+        // Fechar menu ao clicar em um link (mobile)
+        const navLinks = document.querySelectorAll('.sidebar .nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 992) {
+                    toggleMenu();
+                }
+            });
+        });
+
+        // Fechar menu ao clicar no botão de logout (mobile)
+        const logoutBtn = document.querySelector('.sidebar form button');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                if (window.innerWidth < 992) {
+                    toggleMenu();
+                }
+            });
+        }
+    </script>
     <?php echo $__env->yieldContent('scripts'); ?>
 </body>
 

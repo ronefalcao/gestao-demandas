@@ -51,6 +51,7 @@
                             <option value="">Selecione o tipo</option>
                             <option value="administrador" {{ old('tipo') == 'administrador' ? 'selected' : '' }}>
                                 Administrador</option>
+                            <option value="gestor" {{ old('tipo') == 'gestor' ? 'selected' : '' }}>Gestor</option>
                             <option value="usuario" {{ old('tipo') == 'usuario' ? 'selected' : '' }}>Usuário</option>
                         </select>
                         @error('tipo')

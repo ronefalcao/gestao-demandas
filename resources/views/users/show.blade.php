@@ -27,7 +27,7 @@
                 </div>
                 <div class="col-md-6">
                     <p><strong>Tipo:</strong>
-                        <span class="badge {{ $user->tipo === 'administrador' ? 'bg-danger' : 'bg-primary' }}">
+                        <span class="badge {{ $user->tipo === 'administrador' ? 'bg-danger' : ($user->tipo === 'gestor' ? 'bg-warning' : 'bg-primary') }}">
                             {{ ucfirst($user->tipo) }}
                         </span>
                     </p>
