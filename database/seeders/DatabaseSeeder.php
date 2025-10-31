@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Cliente;
-use App\Models\Projeto;
 use App\Models\Status;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -34,55 +32,5 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('admin123'),
             'tipo' => 'administrador',
         ]);
-
-        // Usuário Gestor
-        User::create([
-            'nome' => 'Gestor',
-            'email' => 'gestor@demandas.com',
-            'telefone' => '11999999999',
-            'password' => Hash::make('gestor123'),
-            'tipo' => 'gestor',
-        ]);
-
-        // Usuário Comum
-        User::create([
-            'nome' => 'Usuário Teste',
-            'email' => 'usuario@demandas.com',
-            'telefone' => '11999999999',
-            'password' => Hash::make('usuario123'),
-            'tipo' => 'usuario',
-        ]);
-
-
-        // Clientes
-        $clientes = [
-            ['nome' => 'Prefeitura de Juazeiro do Norte'],
-            ['nome' => 'Prefeitura de Acarape'],
-            ['nome' => 'Prefeitura de Horizonte'],
-            ['nome' => 'Prefeitura de Jaguaribe'],
-            ['nome' => 'Prefeitura de Limoeiro do Norte'],
-            ['nome' => 'Prefeitura de Pacajus'],
-            ['nome' => 'Prefeitura de Pacatuba'],
-            ['nome' => 'Prefeitura de Nova Jaguaribara'],
-            ['nome' => 'Prefeitura de Sobral'],
-            ['nome' => 'Prefeitura de Tabuleiro do Norte'],
-            ['nome' => 'Prefeitura de Potiretama'],
-            ['nome' => 'Prefeitura de Novo Oriente'],
-            ['nome' => 'Prefeitura de Viçosa do Ceará'],
-        ];
-        foreach ($clientes as $cliente) {
-            Cliente::create($cliente);
-        }
-
-        // Projetos
-        $projetos = [
-            ['nome' => 'Integrado Antigo'],
-            ['nome' => 'Integrado 2.0'],
-            ['nome' => 'Sistema de Gestão Educação'],
-            ['nome' => 'Transporte Universitário'],
-        ];
-        foreach ($projetos as $projeto) {
-            Projeto::create($projeto);
-        }
     }
 }
