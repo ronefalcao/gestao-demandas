@@ -71,11 +71,27 @@
                 </div>
             @endif
 
-            @if (!auth()->user()->isUsuario())
+            @php
+                $user = auth()->user();
+                $statusConcluido = $demanda->status->nome === 'Concluído';
+                $podeEditar = !$user->isUsuario() || ($user->isUsuario() && $statusConcluido);
+            @endphp
+
+            @if ($podeEditar)
                 <div class="d-flex gap-2">
-                    <a href="{{ route('demandas.edit', $demanda) }}" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Editar
-                    </a>
+                    @if ($user->isUsuario() && $statusConcluido)
+                        <form action="{{ route('demandas.homologar', $demanda) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-success"
+                                onclick="return confirm('Deseja realmente homologar esta demanda?')">
+                                <i class="bi bi-check-circle"></i> Homologar
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('demandas.edit', $demanda) }}" class="btn btn-warning">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                    @endif
                 </div>
             @endif
 
@@ -83,26 +99,38 @@
             <div class="mt-4 border-top pt-4">
                 <h5 class="mb-3"><i class="bi bi-paperclip"></i> Arquivos Anexados</h5>
 
+                @php
+                    $statusBloqueados = ['Concluído', 'Homologada', 'Publicada', 'Cancelada'];
+                    $podeAnexarArquivo = !in_array($demanda->status->nome, $statusBloqueados);
+                @endphp
+
                 <!-- Formulário de Upload -->
-                <form action="{{ route('demandas.arquivos.upload', $demanda) }}" method="POST"
-                    enctype="multipart/form-data" class="mb-3">
-                    @csrf
-                    <div class="row">
-                        <div class="col-md-8">
-                            <input type="file" class="form-control @error('arquivo') is-invalid @enderror" name="arquivo"
-                                accept=".pdf,.jpeg,.jpg,.png" required>
-                            @error('arquivo')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            <small class="text-muted">Formatos aceitos: PDF, JPEG, JPG, PNG (máximo 10MB)</small>
+                @if ($podeAnexarArquivo)
+                    <form action="{{ route('demandas.arquivos.upload', $demanda) }}" method="POST"
+                        enctype="multipart/form-data" class="mb-3">
+                        @csrf
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="file" class="form-control @error('arquivo') is-invalid @enderror"
+                                    name="arquivo" accept=".pdf,.jpeg,.jpg,.png" required>
+                                @error('arquivo')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <small class="text-muted">Formatos aceitos: PDF, JPEG, JPG, PNG (máximo 10MB)</small>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-upload"></i> Enviar Arquivo
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-upload"></i> Enviar Arquivo
-                            </button>
-                        </div>
+                    </form>
+                @else
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-triangle"></i> Não é possível anexar arquivos em demandas com status
+                        "{{ $demanda->status->nome }}".
                     </div>
-                </form>
+                @endif
 
                 <!-- Lista de Arquivos -->
                 @if ($demanda->arquivos->count() > 0)
@@ -132,7 +160,7 @@
                                                     class="btn btn-sm btn-primary">
                                                     <i class="bi bi-download"></i> Baixar
                                                 </a>
-                                                @if (!auth()->user()->isUsuario())
+                                                @if (!auth()->user()->isUsuario() && $demanda->status->nome === 'Solicitada')
                                                     <form action="{{ route('demandas.arquivos.delete', $arquivo) }}"
                                                         method="POST" class="d-inline">
                                                         @csrf

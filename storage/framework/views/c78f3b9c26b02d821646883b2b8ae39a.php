@@ -8,7 +8,9 @@
     <title><?php echo $__env->yieldContent('title', 'Sistema de Gestão de Demandas'); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500&display=swap"
+        rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
@@ -19,25 +21,47 @@
             --font-secondary: 'Roboto', sans-serif;
         }
 
+        .card-header {
+            background-color: #0F6EBF !important;
+            color: white;
+        }
+
         body {
             font-family: var(--font-secondary);
         }
 
-        h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        .h1,
+        .h2,
+        .h3,
+        .h4,
+        .h5,
+        .h6 {
             font-family: var(--font-primary);
             font-weight: 600;
         }
 
-        .sidebar, .sidebar .nav-link, .sidebar h4 {
+        .sidebar,
+        .sidebar .nav-link,
+        .sidebar h4 {
             font-family: var(--font-primary);
         }
 
-        label, .form-label {
+        label,
+        .form-label {
             font-family: var(--font-secondary);
             font-weight: 500;
         }
 
-        p, .descricao, td, .text-muted {
+        p,
+        .descricao,
+        td,
+        .text-muted {
             font-family: var(--font-secondary);
         }
 

@@ -39,7 +39,8 @@ class Demanda extends Model
 
     private static function gerarNumero()
     {
-        $ultimaDemanda = self::orderByRaw('CAST(numero AS UNSIGNED) DESC')
+        // Usar sintaxe compatível com PostgreSQL
+        $ultimaDemanda = self::orderByRaw('CAST(numero AS INTEGER) DESC')
             ->first();
 
         if ($ultimaDemanda && is_numeric($ultimaDemanda->numero)) {

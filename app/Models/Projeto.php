@@ -26,4 +26,12 @@ class Projeto extends Model
     {
         return $this->hasMany(Demanda::class);
     }
+
+    /**
+     * Relacionamento muitos-para-muitos com usuários
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'projeto_user');
+    }
 }

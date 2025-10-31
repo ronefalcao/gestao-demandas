@@ -105,10 +105,30 @@
                                     <a href="<?php echo e(route('demandas.show', $demanda)); ?>" class="btn btn-sm btn-info">
                                         <i class="bi bi-eye"></i>
                                     </a>
+                                    <?php
+                                        $user = auth()->user();
+                                        $statusConcluido = $demanda->status->nome === 'Concluído';
+                                        $podeEditar = !$user->isUsuario() || ($user->isUsuario() && $statusConcluido);
+                                    ?>
+                                    <?php if($podeEditar): ?>
+                                        <?php if($user->isUsuario() && $statusConcluido): ?>
+                                            <form action="<?php echo e(route('demandas.homologar', $demanda)); ?>" method="POST"
+                                                class="d-inline">
+                                                <?php echo csrf_field(); ?>
+                                                <button type="submit" class="btn btn-sm btn-success"
+                                                    title="Homologar demanda"
+                                                    onclick="return confirm('Deseja realmente homologar esta demanda?')">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                            </form>
+                                        <?php else: ?>
+                                            <a href="<?php echo e(route('demandas.edit', $demanda)); ?>" class="btn btn-sm btn-warning"
+                                                title="Editar demanda">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
                                     <?php if(!auth()->user()->isUsuario()): ?>
-                                        <a href="<?php echo e(route('demandas.edit', $demanda)); ?>" class="btn btn-sm btn-warning">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
                                         <form action="<?php echo e(route('demandas.destroy', $demanda)); ?>" method="POST"
                                             class="d-inline">
                                             <?php echo csrf_field(); ?>

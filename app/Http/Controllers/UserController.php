@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Projeto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -37,12 +38,15 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        $user->load('projetos');
         return view('users.show', compact('user'));
     }
 
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        $projetos = Projeto::orderBy('nome')->get();
+        $user->load('projetos');
+        return view('users.edit', compact('user', 'projetos'));
     }
 
     public function update(Request $request, User $user)
@@ -62,6 +66,18 @@ class UserController extends Controller
         }
 
         $user->update($validated);
+
+        // Sincronizar projetos (apenas se não for administrador, pois admin vê tudo)
+        // Administradores podem gerenciar projetos de outros usuários
+        if (!$user->isAdmin()) {
+            if ($request->has('projetos') && is_array($request->projetos)) {
+                $user->projetos()->sync($request->projetos);
+            } else {
+                // Se não tiver projetos selecionados, remover todos
+                $user->projetos()->detach();
+            }
+        }
+
         return redirect()->route('users.index')->with('success', 'Usuário atualizado com sucesso!');
     }
 

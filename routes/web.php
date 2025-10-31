@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function () {
 
     // Demandas Routes - Todos os usuários autenticados podem acessar
     Route::resource('demandas', DemandaController::class);
+    Route::post('demandas/{demanda}/homologar', [DemandaController::class, 'homologar'])->name('demandas.homologar');
     Route::get('demandas-exportar', [DemandaController::class, 'exportarPdf'])->name('demandas.exportar');
     Route::post('demandas/{demanda}/arquivos', [DemandaController::class, 'uploadArquivo'])->name('demandas.arquivos.upload');
     Route::get('demandas/arquivos/{arquivo}/download', [DemandaController::class, 'downloadArquivo'])->name('demandas.arquivos.download');

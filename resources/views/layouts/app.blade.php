@@ -21,6 +21,11 @@
             --font-secondary: 'Roboto', sans-serif;
         }
 
+        .card-header {
+            background-color: #0F6EBF !important;
+            color: white;
+        }
+
         body {
             font-family: var(--font-secondary);
         }

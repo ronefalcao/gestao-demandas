@@ -81,7 +81,7 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header bg-info text-white">
+                <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="bi bi-clock-history"></i> Demandas Recentes</h5>
                 </div>
                 <div class="card-body">
@@ -97,6 +97,7 @@
                                     <th>Descrição</th>
                                     <th>Status</th>
                                     <th>Solicitante</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -115,10 +116,16 @@
                                             </span>
                                         </td>
                                         <td>{{ $demanda->solicitante->nome }}</td>
+                                        <td>
+                                            <a href="{{ route('demandas.show', $demanda) }}" class="btn btn-sm btn-info"
+                                                title="Visualizar demanda">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center">Nenhuma demanda encontrada</td>
+                                        <td colspan="9" class="text-center">Nenhuma demanda encontrada</td>
                                     </tr>
                                 @endforelse
                             </tbody>
