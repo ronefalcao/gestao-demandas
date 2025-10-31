@@ -6,12 +6,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <title><?php echo $__env->yieldContent('title', 'Sistema de Gestão de Demandas'); ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
+        :root {
+            --bs-primary: #0F6EBF;
+            --bs-primary-rgb: 15, 110, 191;
+            --font-primary: 'Open Sans', sans-serif;
+            --font-secondary: 'Roboto', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-secondary);
+        }
+
+        h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+            font-family: var(--font-primary);
+            font-weight: 600;
+        }
+
+        .sidebar, .sidebar .nav-link, .sidebar h4 {
+            font-family: var(--font-primary);
+        }
+
+        label, .form-label {
+            font-family: var(--font-secondary);
+            font-weight: 500;
+        }
+
+        p, .descricao, td, .text-muted {
+            font-family: var(--font-secondary);
+        }
+
         .sidebar {
             min-height: 100vh;
-            background: #2c3e50;
+            background: #08253D;
             position: fixed;
             top: 0;
             left: 0;
@@ -46,7 +78,7 @@
             top: 15px;
             left: 15px;
             z-index: 1001;
-            background: #2c3e50;
+            background: #08253D;
             border: none;
             color: white;
             font-size: 1.5rem;
@@ -237,6 +269,15 @@
                 }
             });
         }
+
+        // Auto-fechar alertas após 5 segundos
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            const bsAlert = new bootstrap.Alert(alert);
+            setTimeout(() => {
+                bsAlert.close();
+            }, 5000);
+        });
     </script>
     <?php echo $__env->yieldContent('scripts'); ?>
 </body>

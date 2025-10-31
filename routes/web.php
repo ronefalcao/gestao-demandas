@@ -23,6 +23,9 @@ Route::middleware('auth')->group(function () {
     // Demandas Routes - Todos os usuários autenticados podem acessar
     Route::resource('demandas', DemandaController::class);
     Route::get('demandas-exportar', [DemandaController::class, 'exportarPdf'])->name('demandas.exportar');
+    Route::post('demandas/{demanda}/arquivos', [DemandaController::class, 'uploadArquivo'])->name('demandas.arquivos.upload');
+    Route::get('demandas/arquivos/{arquivo}/download', [DemandaController::class, 'downloadArquivo'])->name('demandas.arquivos.download');
+    Route::delete('demandas/arquivos/{arquivo}', [DemandaController::class, 'deletarArquivo'])->name('demandas.arquivos.delete');
 
     // Rotas apenas para administradores
     Route::middleware('admin')->group(function () {

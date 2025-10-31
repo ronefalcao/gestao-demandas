@@ -112,7 +112,7 @@ unset($__errorArgs, $__bag); ?>
 
                     <?php if(!auth()->user()->isUsuario()): ?>
                         <div class="col-md-6">
-                            <label for="responsavel_id" class="form-label">Responsável</label>
+                            <label for="responsavel_id" class="form-label">Responsável (Opcional)</label>
                             <select class="form-select <?php $__errorArgs = ['responsavel_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -121,7 +121,7 @@ $message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" id="responsavel_id"
-                                name="responsavel_id" required>
+                                name="responsavel_id">
                                 <option value="">Selecione um responsável</option>
                                 <?php $__currentLoopData = $users; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $user): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($user->id); ?>"
@@ -156,7 +156,7 @@ $message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>" id="projeto_id"
-                            name="projeto_id">
+                            name="projeto_id" required>
                             <option value="">Selecione um projeto</option>
                             <?php $__currentLoopData = $projetos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $projeto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <option value="<?php echo e($projeto->id); ?>"

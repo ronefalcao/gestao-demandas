@@ -10,6 +10,7 @@ class Demanda extends Model
     use HasFactory;
 
     protected $fillable = [
+        'numero',
         'data',
         'cliente_id',
         'projeto_id',
@@ -24,6 +25,31 @@ class Demanda extends Model
     protected $casts = [
         'data' => 'date',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($demanda) {
+            if (empty($demanda->numero)) {
+                $demanda->numero = self::gerarNumero();
+            }
+        });
+    }
+
+    private static function gerarNumero()
+    {
+        $ultimaDemanda = self::orderByRaw('CAST(numero AS UNSIGNED) DESC')
+            ->first();
+
+        if ($ultimaDemanda && is_numeric($ultimaDemanda->numero)) {
+            $sequencial = intval($ultimaDemanda->numero) + 1;
+        } else {
+            $sequencial = 1;
+        }
+
+        return str_pad($sequencial, 5, '0', STR_PAD_LEFT);
+    }
 
     public function cliente()
     {
@@ -48,5 +74,10 @@ class Demanda extends Model
     public function status()
     {
         return $this->belongsTo(Status::class);
+    }
+
+    public function arquivos()
+    {
+        return $this->hasMany(DemandaArquivo::class);
     }
 }

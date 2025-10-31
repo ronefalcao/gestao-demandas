@@ -72,6 +72,7 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th>Número</th>
                             <th>Data</th>
                             <th>Cliente</th>
                             <th>Projeto</th>
@@ -79,13 +80,13 @@
                             <th>Descrição</th>
                             <th>Status</th>
                             <th>Solicitante</th>
-                            <th>Responsável</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($demandas as $demanda)
                             <tr>
+                                <td><strong>{{ $demanda->numero }}</strong></td>
                                 <td>{{ $demanda->data->format('d/m/Y') }}</td>
                                 <td>{{ $demanda->cliente->nome }}</td>
                                 <td>{{ $demanda->projeto ? $demanda->projeto->nome : '-' }}</td>
@@ -98,7 +99,6 @@
                                     </span>
                                 </td>
                                 <td>{{ $demanda->solicitante->nome }}</td>
-                                <td>{{ $demanda->responsavel ? $demanda->responsavel->nome : 'N/A' }}</td>
                                 <td>
                                     <a href="{{ route('demandas.show', $demanda) }}" class="btn btn-sm btn-info">
                                         <i class="bi bi-eye"></i>

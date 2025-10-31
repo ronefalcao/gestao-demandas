@@ -88,6 +88,7 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
+                                    <th>Número</th>
                                     <th>Data</th>
                                     <th>Cliente</th>
                                     <th>Projeto</th>
@@ -95,12 +96,12 @@
                                     <th>Descrição</th>
                                     <th>Status</th>
                                     <th>Solicitante</th>
-                                    <th>Responsável</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php $__empty_1 = true; $__currentLoopData = $demandasRecentes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $demanda): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                     <tr>
+                                        <td><strong><?php echo e($demanda->numero); ?></strong></td>
                                         <td><?php echo e($demanda->data->format('d/m/Y')); ?></td>
                                         <td><?php echo e($demanda->cliente->nome); ?></td>
                                         <td><?php echo e($demanda->projeto ? $demanda->projeto->nome : '-'); ?></td>
@@ -114,7 +115,6 @@
                                             </span>
                                         </td>
                                         <td><?php echo e($demanda->solicitante->nome); ?></td>
-                                        <td><?php echo e($demanda->responsavel ? $demanda->responsavel->nome : 'N/A'); ?></td>
                                     </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr>
