@@ -10,10 +10,14 @@ return new class extends Migration
     {
         Schema::create('status', function (Blueprint $table) {
             $table->id();
-            $table->string('nome');
-            $table->string('cor')->nullable();
+            $table->string('nome')->unique();
+            $table->string('cor', 7)->nullable(); // Código hexadecimal da cor (#RRGGBB)
             $table->integer('ordem')->default(0);
             $table->timestamps();
+
+            // Índices
+            $table->index('nome');
+            $table->index('ordem');
         });
     }
 

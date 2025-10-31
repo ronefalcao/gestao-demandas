@@ -17,6 +17,10 @@ return new class extends Migration
             $table->text('descricao')->nullable();
             $table->boolean('ativo')->default(true);
             $table->timestamps();
+
+            // Índice para nome (pode ser usado em buscas)
+            $table->index('nome');
+            $table->index('ativo');
         });
     }
 

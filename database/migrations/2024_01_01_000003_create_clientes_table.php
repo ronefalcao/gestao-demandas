@@ -12,6 +12,9 @@ return new class extends Migration
             $table->id();
             $table->string('nome');
             $table->timestamps();
+
+            // Índice para nome (pode ser usado em buscas)
+            $table->index('nome');
         });
     }
 

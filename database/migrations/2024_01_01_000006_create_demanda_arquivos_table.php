@@ -17,9 +17,12 @@ return new class extends Migration
             $table->string('nome_original');
             $table->string('nome_arquivo');
             $table->string('caminho');
-            $table->string('tipo')->nullable(); // pdf, jpeg, etc
-            $table->integer('tamanho')->nullable(); // em bytes
+            $table->string('tipo', 10)->nullable(); // pdf, jpeg, png, etc
+            $table->bigInteger('tamanho')->nullable(); // em bytes (bigInteger para suportar arquivos maiores)
             $table->timestamps();
+
+            // Índices
+            $table->index('demanda_id');
         });
     }
 

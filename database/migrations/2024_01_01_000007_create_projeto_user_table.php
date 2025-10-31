@@ -16,8 +16,13 @@ return new class extends Migration
             $table->foreignId('projeto_id')->constrained('projetos')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
-
+            
+            // Constraint única para evitar duplicatas
             $table->unique(['projeto_id', 'user_id']);
+            
+            // Índices para melhor performance em consultas
+            $table->index('projeto_id');
+            $table->index('user_id');
         });
     }
 
