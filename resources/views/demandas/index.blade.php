@@ -20,7 +20,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('demandas.index') }}">
                 <div class="row">
-                    <div class="col-md-5">
+                    <div class="col-md-3">
                         <label for="cliente_id" class="form-label">Cliente</label>
                         <select class="form-select" id="cliente_id" name="cliente_id">
                             <option value="">Todos os clientes</option>
@@ -32,7 +32,19 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-3">
+                        <label for="projeto_id" class="form-label">Projeto</label>
+                        <select class="form-select" id="projeto_id" name="projeto_id">
+                            <option value="">Todos os projetos</option>
+                            @foreach ($projetos as $projeto)
+                                <option value="{{ $projeto->id }}"
+                                    {{ request('projeto_id') == $projeto->id ? 'selected' : '' }}>
+                                    {{ $projeto->nome }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
                         <label for="status_id" class="form-label">Status</label>
                         <select class="form-select" id="status_id" name="status_id">
                             <option value="">Todos os status</option>
@@ -62,6 +74,7 @@
                         <tr>
                             <th>Data</th>
                             <th>Cliente</th>
+                            <th>Projeto</th>
                             <th>Módulo</th>
                             <th>Descrição</th>
                             <th>Status</th>
@@ -75,6 +88,7 @@
                             <tr>
                                 <td>{{ $demanda->data->format('d/m/Y') }}</td>
                                 <td>{{ $demanda->cliente->nome }}</td>
+                                <td>{{ $demanda->projeto ? $demanda->projeto->nome : '-' }}</td>
                                 <td>{{ $demanda->modulo }}</td>
                                 <td>{{ Str::limit($demanda->descricao, 50) }}</td>
                                 <td>
@@ -84,28 +98,30 @@
                                     </span>
                                 </td>
                                 <td>{{ $demanda->solicitante->nome }}</td>
-                                <td>{{ $demanda->responsavel->nome }}</td>
+                                <td>{{ $demanda->responsavel ? $demanda->responsavel->nome : 'N/A' }}</td>
                                 <td>
                                     <a href="{{ route('demandas.show', $demanda) }}" class="btn btn-sm btn-info">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('demandas.edit', $demanda) }}" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form action="{{ route('demandas.destroy', $demanda) }}" method="POST"
-                                        class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger"
-                                            onclick="return confirm('Deseja realmente excluir esta demanda?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if (!auth()->user()->isUsuario())
+                                        <a href="{{ route('demandas.edit', $demanda) }}" class="btn btn-sm btn-warning">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form action="{{ route('demandas.destroy', $demanda) }}" method="POST"
+                                            class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Deseja realmente excluir esta demanda?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">Nenhuma demanda encontrada</td>
+                                <td colspan="9" class="text-center">Nenhuma demanda encontrada</td>
                             </tr>
                         @endforelse
                     </tbody>

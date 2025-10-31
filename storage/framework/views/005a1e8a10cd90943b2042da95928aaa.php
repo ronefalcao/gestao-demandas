@@ -147,6 +147,38 @@ unset($__errorArgs, $__bag); ?>
 
                 <div class="row mb-3">
                     <div class="col-md-6">
+                        <label for="projeto_id" class="form-label">Projeto</label>
+                        <select class="form-select <?php $__errorArgs = ['projeto_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" id="projeto_id"
+                            name="projeto_id">
+                            <option value="">Selecione um projeto</option>
+                            <?php $__currentLoopData = $projetos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $projeto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($projeto->id); ?>"
+                                    <?php echo e(old('projeto_id') == $projeto->id ? 'selected' : ''); ?>>
+                                    <?php echo e($projeto->nome); ?>
+
+                                </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                        <?php $__errorArgs = ['projeto_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                            <div class="invalid-feedback"><?php echo e($message); ?></div>
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                    </div>
+
+                    <div class="col-md-6">
                         <label for="modulo" class="form-label">Módulo</label>
                         <input type="text" class="form-control <?php $__errorArgs = ['modulo'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -168,16 +200,18 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
                     </div>
+                </div>
 
+                <div class="row mb-3">
                     <?php if(auth()->user()->isUsuario()): ?>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="status_id" class="form-label">Status</label>
                             <input type="text" class="form-control"
                                 value="<?php echo e($statuses->first()->nome ?? 'Solicitada'); ?>" readonly>
                             <input type="hidden" name="status_id" value="<?php echo e($statuses->first()->id ?? ''); ?>">
                         </div>
                     <?php else: ?>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="status_id" class="form-label">Status</label>
                             <select class="form-select <?php $__errorArgs = ['status_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');

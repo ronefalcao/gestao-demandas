@@ -90,6 +90,23 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
+                        <label for="projeto_id" class="form-label">Projeto</label>
+                        <select class="form-select @error('projeto_id') is-invalid @enderror" id="projeto_id"
+                            name="projeto_id">
+                            <option value="">Selecione um projeto</option>
+                            @foreach ($projetos as $projeto)
+                                <option value="{{ $projeto->id }}"
+                                    {{ old('projeto_id') == $projeto->id ? 'selected' : '' }}>
+                                    {{ $projeto->nome }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('projeto_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6">
                         <label for="modulo" class="form-label">Módulo</label>
                         <input type="text" class="form-control @error('modulo') is-invalid @enderror" id="modulo"
                             name="modulo" value="{{ old('modulo') }}" required>
@@ -97,16 +114,18 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                </div>
 
+                <div class="row mb-3">
                     @if (auth()->user()->isUsuario())
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="status_id" class="form-label">Status</label>
                             <input type="text" class="form-control"
                                 value="{{ $statuses->first()->nome ?? 'Solicitada' }}" readonly>
                             <input type="hidden" name="status_id" value="{{ $statuses->first()->id ?? '' }}">
                         </div>
                     @else
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label for="status_id" class="form-label">Status</label>
                             <select class="form-select @error('status_id') is-invalid @enderror" id="status_id"
                                 name="status_id" required>

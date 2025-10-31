@@ -40,7 +40,7 @@
                                 <td>{{ $user->email }}</td>
                                 <td>{{ $user->telefone ?? 'N/A' }}</td>
                                 <td>
-                                    <span class="badge {{ $user->tipo === 'administrador' ? 'bg-danger' : 'bg-primary' }}">
+                                    <span class="badge {{ $user->tipo === 'administrador' ? 'bg-danger' : ($user->tipo === 'gestor' ? 'bg-warning' : 'bg-primary') }}">
                                         {{ ucfirst($user->tipo) }}
                                     </span>
                                 </td>

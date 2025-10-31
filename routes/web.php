@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DemandaController;
+use App\Http\Controllers\ProjetoController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -30,6 +31,9 @@ Route::middleware('auth')->group(function () {
 
         // Clientes Routes
         Route::resource('clientes', ClienteController::class);
+
+        // Projetos Routes
+        Route::resource('projetos', ProjetoController::class);
 
         // Status Routes
         Route::resource('status', StatusController::class);

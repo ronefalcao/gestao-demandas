@@ -53,6 +53,8 @@
                             <option value="administrador"
                                 {{ old('tipo', $user->tipo) == 'administrador' ? 'selected' : '' }}>Administrador
                             </option>
+                            <option value="gestor" {{ old('tipo', $user->tipo) == 'gestor' ? 'selected' : '' }}>
+                                Gestor</option>
                             <option value="usuario" {{ old('tipo', $user->tipo) == 'usuario' ? 'selected' : '' }}>
                                 Usuário</option>
                         </select>

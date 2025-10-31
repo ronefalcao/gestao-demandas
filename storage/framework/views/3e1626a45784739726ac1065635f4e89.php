@@ -18,7 +18,7 @@
         <div class="card-body">
             <form method="GET" action="<?php echo e(route('demandas.index')); ?>">
                 <div class="row">
-                    <div class="col-md-5">
+                    <div class="col-md-3">
                         <label for="cliente_id" class="form-label">Cliente</label>
                         <select class="form-select" id="cliente_id" name="cliente_id">
                             <option value="">Todos os clientes</option>
@@ -31,7 +31,20 @@
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-3">
+                        <label for="projeto_id" class="form-label">Projeto</label>
+                        <select class="form-select" id="projeto_id" name="projeto_id">
+                            <option value="">Todos os projetos</option>
+                            <?php $__currentLoopData = $projetos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $projeto): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($projeto->id); ?>"
+                                    <?php echo e(request('projeto_id') == $projeto->id ? 'selected' : ''); ?>>
+                                    <?php echo e($projeto->nome); ?>
+
+                                </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
                         <label for="status_id" class="form-label">Status</label>
                         <select class="form-select" id="status_id" name="status_id">
                             <option value="">Todos os status</option>
@@ -62,6 +75,7 @@
                         <tr>
                             <th>Data</th>
                             <th>Cliente</th>
+                            <th>Projeto</th>
                             <th>Módulo</th>
                             <th>Descrição</th>
                             <th>Status</th>
@@ -75,6 +89,7 @@
                             <tr>
                                 <td><?php echo e($demanda->data->format('d/m/Y')); ?></td>
                                 <td><?php echo e($demanda->cliente->nome); ?></td>
+                                <td><?php echo e($demanda->projeto ? $demanda->projeto->nome : '-'); ?></td>
                                 <td><?php echo e($demanda->modulo); ?></td>
                                 <td><?php echo e(Str::limit($demanda->descricao, 50)); ?></td>
                                 <td>
@@ -85,28 +100,30 @@
                                     </span>
                                 </td>
                                 <td><?php echo e($demanda->solicitante->nome); ?></td>
-                                <td><?php echo e($demanda->responsavel->nome); ?></td>
+                                <td><?php echo e($demanda->responsavel ? $demanda->responsavel->nome : 'N/A'); ?></td>
                                 <td>
                                     <a href="<?php echo e(route('demandas.show', $demanda)); ?>" class="btn btn-sm btn-info">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="<?php echo e(route('demandas.edit', $demanda)); ?>" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form action="<?php echo e(route('demandas.destroy', $demanda)); ?>" method="POST"
-                                        class="d-inline">
-                                        <?php echo csrf_field(); ?>
-                                        <?php echo method_field('DELETE'); ?>
-                                        <button type="submit" class="btn btn-sm btn-danger"
-                                            onclick="return confirm('Deseja realmente excluir esta demanda?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <?php if(!auth()->user()->isUsuario()): ?>
+                                        <a href="<?php echo e(route('demandas.edit', $demanda)); ?>" class="btn btn-sm btn-warning">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form action="<?php echo e(route('demandas.destroy', $demanda)); ?>" method="POST"
+                                            class="d-inline">
+                                            <?php echo csrf_field(); ?>
+                                            <?php echo method_field('DELETE'); ?>
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Deseja realmente excluir esta demanda?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                             <tr>
-                                <td colspan="8" class="text-center">Nenhuma demanda encontrada</td>
+                                <td colspan="9" class="text-center">Nenhuma demanda encontrada</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

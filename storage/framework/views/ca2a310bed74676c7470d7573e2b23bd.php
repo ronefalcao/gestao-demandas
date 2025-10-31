@@ -40,14 +40,37 @@
         </div>
     </div>
 
-    <!-- Total Geral -->
+    <!-- Totais Gerais -->
     <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card bg-gradient text-primary"
-                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
                 <div class="card-body text-center py-4">
-                    <h3>Total de Demandas</h3>
-                    <h1 class="display-1 fw-bold text-primary"><?php echo e($totalDemandas); ?></h1>
+                    <h5 class="text-muted"><i class="bi bi-people-fill"></i> Total de Usuários</h5>
+                    <h1 class="display-3 fw-bold text-primary"><?php echo e($totalUsuarios); ?></h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h5 class="text-muted"><i class="bi bi-folder"></i> Total de Projetos</h5>
+                    <h1 class="display-3 fw-bold text-danger"><?php echo e($totalProjetos); ?></h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h5 class="text-muted"><i class="bi bi-people"></i> Total de Clientes</h5>
+                    <h1 class="display-3 fw-bold text-success"><?php echo e($totalClientes); ?></h1>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <h5 class="text-muted"><i class="bi bi-file-text"></i> Total de Demandas</h5>
+                    <h1 class="display-3 fw-bold text-warning"><?php echo e($totalDemandas); ?></h1>
                 </div>
             </div>
         </div>
@@ -67,6 +90,7 @@
                                 <tr>
                                     <th>Data</th>
                                     <th>Cliente</th>
+                                    <th>Projeto</th>
                                     <th>Módulo</th>
                                     <th>Descrição</th>
                                     <th>Status</th>
@@ -79,6 +103,7 @@
                                     <tr>
                                         <td><?php echo e($demanda->data->format('d/m/Y')); ?></td>
                                         <td><?php echo e($demanda->cliente->nome); ?></td>
+                                        <td><?php echo e($demanda->projeto ? $demanda->projeto->nome : '-'); ?></td>
                                         <td><?php echo e($demanda->modulo); ?></td>
                                         <td><?php echo e(Str::limit($demanda->descricao, 50)); ?></td>
                                         <td>
@@ -89,11 +114,11 @@
                                             </span>
                                         </td>
                                         <td><?php echo e($demanda->solicitante->nome); ?></td>
-                                        <td><?php echo e($demanda->responsavel->nome); ?></td>
+                                        <td><?php echo e($demanda->responsavel ? $demanda->responsavel->nome : 'N/A'); ?></td>
                                     </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr>
-                                        <td colspan="7" class="text-center">Nenhuma demanda encontrada</td>
+                                        <td colspan="8" class="text-center">Nenhuma demanda encontrada</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>

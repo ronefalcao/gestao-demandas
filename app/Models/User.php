@@ -49,10 +49,34 @@ class User extends Authenticatable
     }
 
     /**
+     * Verifica se o usuário é gestor
+     */
+    public function isGestor(): bool
+    {
+        return $this->tipo === 'gestor';
+    }
+
+    /**
      * Verifica se o usuário é um usuário comum
      */
     public function isUsuario(): bool
     {
         return $this->tipo === 'usuario';
+    }
+
+    /**
+     * Verifica se o usuário pode visualizar todas as demandas
+     */
+    public function canViewAllDemandas(): bool
+    {
+        return $this->isAdmin() || $this->isGestor();
+    }
+
+    /**
+     * Verifica se o usuário pode gerenciar usuários, clientes e status
+     */
+    public function canManageSystem(): bool
+    {
+        return $this->isAdmin();
     }
 }
