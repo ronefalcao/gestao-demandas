@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Demanda;
+use App\Models\DemandaArquivo;
 use App\Models\Cliente;
 use App\Models\Projeto;
 use App\Models\Status;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class DemandaController extends Controller
 {
@@ -68,7 +70,7 @@ class DemandaController extends Controller
             $validated = $request->validate([
                 'data' => 'required|date',
                 'cliente_id' => 'required|exists:clientes,id',
-                'projeto_id' => 'nullable|exists:projetos,id',
+                'projeto_id' => 'required|exists:projetos,id',
                 'modulo' => 'required|string|max:255',
                 'descricao' => 'required|string',
                 'observacao' => 'nullable|string',
@@ -85,9 +87,9 @@ class DemandaController extends Controller
             $validated = $request->validate([
                 'data' => 'required|date',
                 'cliente_id' => 'required|exists:clientes,id',
-                'projeto_id' => 'nullable|exists:projetos,id',
+                'projeto_id' => 'required|exists:projetos,id',
                 'solicitante_id' => 'required|exists:users,id',
-                'responsavel_id' => 'required|exists:users,id',
+                'responsavel_id' => 'nullable|exists:users,id',
                 'modulo' => 'required|string|max:255',
                 'descricao' => 'required|string',
                 'status_id' => 'required|exists:status,id',
@@ -95,27 +97,27 @@ class DemandaController extends Controller
             ]);
         }
 
-        Demanda::create($validated);
-        return redirect()->route('demandas.index')->with('success', 'Demanda criada com sucesso!');
+        $demanda = Demanda::create($validated);
+        return redirect()->route('demandas.show', $demanda)->with('success', 'Demanda criada com sucesso!');
     }
 
     public function show(Demanda $demanda)
     {
         $user = auth()->user();
-        
+
         // Usuário comum só pode ver suas próprias demandas
         if ($user->isUsuario() && $demanda->solicitante_id !== $user->id) {
             abort(403, 'Você não tem permissão para visualizar esta demanda.');
         }
 
-        $demanda->load(['cliente', 'projeto', 'solicitante', 'responsavel', 'status']);
+        $demanda->load(['cliente', 'projeto', 'solicitante', 'responsavel', 'status', 'arquivos']);
         return view('demandas.show', compact('demanda'));
     }
 
     public function edit(Demanda $demanda)
     {
         $user = auth()->user();
-        
+
         // Usuário comum não pode editar demandas
         if ($user->isUsuario()) {
             abort(403, 'Você não tem permissão para editar demandas.');
@@ -131,7 +133,7 @@ class DemandaController extends Controller
     public function update(Request $request, Demanda $demanda)
     {
         $user = auth()->user();
-        
+
         // Usuário comum não pode atualizar demandas
         if ($user->isUsuario()) {
             abort(403, 'Você não tem permissão para atualizar demandas.');
@@ -140,9 +142,9 @@ class DemandaController extends Controller
         $validated = $request->validate([
             'data' => 'required|date',
             'cliente_id' => 'required|exists:clientes,id',
-            'projeto_id' => 'nullable|exists:projetos,id',
+            'projeto_id' => 'required|exists:projetos,id',
             'solicitante_id' => 'required|exists:users,id',
-            'responsavel_id' => 'required|exists:users,id',
+            'responsavel_id' => 'nullable|exists:users,id',
             'modulo' => 'required|string|max:255',
             'descricao' => 'required|string',
             'status_id' => 'required|exists:status,id',
@@ -156,7 +158,7 @@ class DemandaController extends Controller
     public function destroy(Demanda $demanda)
     {
         $user = auth()->user();
-        
+
         // Usuário comum não pode excluir demandas
         if ($user->isUsuario()) {
             abort(403, 'Você não tem permissão para excluir demandas.');
@@ -194,5 +196,57 @@ class DemandaController extends Controller
         $statuses = Status::all();
 
         return view('demandas.pdf', compact('demandas', 'statuses'))->render();
+    }
+
+    public function uploadArquivo(Request $request, Demanda $demanda)
+    {
+        $request->validate([
+            'arquivo' => 'required|file|mimes:pdf,jpeg,jpg,png|max:10240', // 10MB max
+        ]);
+
+        $arquivo = $request->file('arquivo');
+        $nomeOriginal = $arquivo->getClientOriginalName();
+        $nomeArquivo = uniqid() . '_' . time() . '.' . $arquivo->getClientOriginalExtension();
+        $caminho = $arquivo->storeAs('demandas', $nomeArquivo, 'public');
+
+        DemandaArquivo::create([
+            'demanda_id' => $demanda->id,
+            'nome_original' => $nomeOriginal,
+            'nome_arquivo' => $nomeArquivo,
+            'caminho' => $caminho,
+            'tipo' => $arquivo->getClientOriginalExtension(),
+            'tamanho' => $arquivo->getSize(),
+        ]);
+
+        return redirect()->route('demandas.show', $demanda)->with('success', 'Arquivo enviado com sucesso!');
+    }
+
+    public function downloadArquivo(DemandaArquivo $arquivo)
+    {
+        $user = auth()->user();
+        $demanda = $arquivo->demanda;
+
+        // Usuário comum só pode baixar arquivos de suas próprias demandas
+        if ($user->isUsuario() && $demanda->solicitante_id !== $user->id) {
+            abort(403, 'Você não tem permissão para baixar este arquivo.');
+        }
+
+        return Storage::disk('public')->download($arquivo->caminho, $arquivo->nome_original);
+    }
+
+    public function deletarArquivo(DemandaArquivo $arquivo)
+    {
+        $user = auth()->user();
+        $demanda = $arquivo->demanda;
+
+        // Usuário comum não pode deletar arquivos
+        if ($user->isUsuario()) {
+            abort(403, 'Você não tem permissão para deletar arquivos.');
+        }
+
+        Storage::disk('public')->delete($arquivo->caminho);
+        $arquivo->delete();
+
+        return redirect()->route('demandas.show', $demanda)->with('success', 'Arquivo excluído com sucesso!');
     }
 }

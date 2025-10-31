@@ -62,6 +62,7 @@
     <table>
         <thead>
             <tr>
+                <th>Número</th>
                 <th>Data</th>
                 <th>Cliente</th>
                 <th>Projeto</th>
@@ -69,12 +70,12 @@
                 <th>Descrição</th>
                 <th>Status</th>
                 <th>Solicitante</th>
-                <th>Responsável</th>
             </tr>
         </thead>
         <tbody>
             @forelse($demandas as $demanda)
                 <tr>
+                    <td>{{ $demanda->numero }}</td>
                     <td>{{ $demanda->data->format('d/m/Y') }}</td>
                     <td>{{ $demanda->cliente->nome }}</td>
                     <td>{{ $demanda->projeto ? $demanda->projeto->nome : '-' }}</td>
@@ -82,7 +83,6 @@
                     <td>{{ $demanda->descricao }}</td>
                     <td>{{ $demanda->status->nome }}</td>
                     <td>{{ $demanda->solicitante->nome }}</td>
-                    <td>{{ $demanda->responsavel ? $demanda->responsavel->nome : 'N/A' }}</td>
                 </tr>
             @empty
                 <tr>

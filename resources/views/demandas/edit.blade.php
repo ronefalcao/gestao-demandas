@@ -62,9 +62,9 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label for="responsavel_id" class="form-label">Responsável</label>
+                        <label for="responsavel_id" class="form-label">Responsável (Opcional)</label>
                         <select class="form-select @error('responsavel_id') is-invalid @enderror" id="responsavel_id"
-                            name="responsavel_id" required>
+                            name="responsavel_id">
                             <option value="">Selecione um responsável</option>
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}"
@@ -83,7 +83,7 @@
                     <div class="col-md-6">
                         <label for="projeto_id" class="form-label">Projeto</label>
                         <select class="form-select @error('projeto_id') is-invalid @enderror" id="projeto_id"
-                            name="projeto_id">
+                            name="projeto_id" required>
                             <option value="">Selecione um projeto</option>
                             @foreach ($projetos as $projeto)
                                 <option value="{{ $projeto->id }}"
