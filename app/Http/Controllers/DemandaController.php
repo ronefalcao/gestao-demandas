@@ -50,7 +50,7 @@ class DemandaController extends Controller
             $query->where('projeto_id', $request->projeto_id);
         }
 
-        $demandas = $query->orderBy('data', 'desc')->paginate(15);
+        $demandas = $query->orderBy('data', 'desc')->get();
         $clientes = Cliente::all();
 
         // Filtrar projetos baseado no usuário

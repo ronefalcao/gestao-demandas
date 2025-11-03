@@ -13,9 +13,9 @@ class ProjetoController extends Controller
 
         // Admin vê todos os projetos, outros usuários veem apenas os associados
         if ($user->isAdmin()) {
-            $projetos = Projeto::orderBy('nome')->paginate(15);
+            $projetos = Projeto::orderBy('nome')->get();
         } else {
-            $projetos = $user->projetos()->orderBy('nome')->paginate(15);
+            $projetos = $user->projetos()->orderBy('nome')->get();
         }
 
         return view('projetos.index', compact('projetos'));

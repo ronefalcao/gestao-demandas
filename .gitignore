@@ -6,6 +6,7 @@
 /storage/framework/sessions/*
 /storage/framework/views/*
 /storage/*.key
+/storage/logs/*
 /vendor
 .env
 .env.backup

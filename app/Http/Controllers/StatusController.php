@@ -9,7 +9,7 @@ class StatusController extends Controller
 {
     public function index()
     {
-        $statuses = Status::orderBy('ordem')->paginate(15);
+        $statuses = Status::orderBy('ordem')->get();
         return view('status.index', compact('statuses'));
     }
 
