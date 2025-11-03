@@ -20,7 +20,7 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table id="usersTable" class="table table-hover table-striped">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -72,10 +72,23 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="d-flex justify-content-center mt-4">
-                {{ $users->links() }}
-            </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('#usersTable').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+            },
+            pageLength: 15,
+            order: [[1, 'asc']], // Ordenar por nome
+            columnDefs: [
+                { orderable: false, targets: 6 } // Desabilitar ordenação na coluna de ações
+            ]
+        });
+    });
+</script>
 @endsection

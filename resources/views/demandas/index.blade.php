@@ -69,7 +69,7 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table id="demandasTable" class="table table-hover table-striped">
                     <thead>
                         <tr>
                             <th>Número</th>
@@ -147,10 +147,23 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="d-flex justify-content-center mt-4">
-                {{ $demandas->links() }}
-            </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        $('#demandasTable').DataTable({
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json'
+            },
+            pageLength: 15,
+            order: [[1, 'desc']], // Ordenar por data (coluna 1)
+            columnDefs: [
+                { orderable: false, targets: 8 } // Desabilitar ordenação na coluna de ações
+            ]
+        });
+    });
+</script>
 @endsection
