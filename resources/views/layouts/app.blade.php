@@ -11,336 +11,175 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500&display=swap"
         rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-    <style>
-        :root {
-            --bs-primary: #0F6EBF;
-            --bs-primary-rgb: 15, 110, 191;
-            --font-primary: 'Open Sans', sans-serif;
-            --font-secondary: 'Roboto', sans-serif;
-        }
-
-        .card-header {
-            background-color: #0F6EBF !important;
-            color: white;
-        }
-
-        body {
-            font-family: var(--font-secondary);
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        .h1,
-        .h2,
-        .h3,
-        .h4,
-        .h5,
-        .h6 {
-            font-family: var(--font-primary);
-            font-weight: 600;
-        }
-
-        .sidebar,
-        .sidebar .nav-link,
-        .sidebar h4 {
-            font-family: var(--font-primary);
-        }
-
-        label,
-        .form-label {
-            font-family: var(--font-secondary);
-            font-weight: 500;
-        }
-
-        p,
-        .descricao,
-        td,
-        .text-muted {
-            font-family: var(--font-secondary);
-        }
-
-        .sidebar {
-            min-height: 100vh;
-            background: #08253D;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .sidebar.hidden {
-            transform: translateX(-100%);
-        }
-
-        .sidebar .nav-link {
-            color: #ecf0f1;
-            padding: 15px 20px;
-        }
-
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background: #34495e;
-            color: #fff;
-        }
-
-        .main-content {
-            background: #f8f9fa;
-            min-height: 100vh;
-        }
-
-        /* Botão hamburger */
-        .menu-toggle {
-            display: none;
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            z-index: 1001;
-            background: #08253D;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Overlay para fechar menu ao clicar fora */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-
-        .sidebar-overlay.active {
-            display: block;
-        }
-
-        /* Ajustes para mobile */
-        @media (max-width: 991.98px) {
-            .sidebar {
-                width: 260px;
-            }
-
-            .menu-toggle {
-                display: block;
-            }
-
-            .main-content {
-                margin-left: 0 !important;
-            }
-        }
-
-        /* Desktop: mostrar sidebar sempre */
-        @media (min-width: 992px) {
-            .sidebar {
-                position: relative;
-                transform: translateX(0) !important;
-            }
-
-            .main-content {
-                margin-left: auto;
-            }
-        }
-
-        /* DataTables - Corrigir setas de ordenação */
-        table.dataTable thead .sorting:before,
-        table.dataTable thead .sorting:after,
-        table.dataTable thead .sorting_asc:before,
-        table.dataTable thead .sorting_asc:after,
-        table.dataTable thead .sorting_desc:before,
-        table.dataTable thead .sorting_desc:after,
-        table.dataTable thead .sorting_asc_disabled:before,
-        table.dataTable thead .sorting_asc_disabled:after,
-        table.dataTable thead .sorting_desc_disabled:before,
-        table.dataTable thead .sorting_desc_disabled:after {
-            font-size: 0.7em;
-            opacity: 0.5;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        
-        table.dataTable thead .sorting:before,
-        table.dataTable thead .sorting_asc:before,
-        table.dataTable thead .sorting_desc:before,
-        table.dataTable thead .sorting_asc_disabled:before,
-        table.dataTable thead .sorting_desc_disabled:before {
-            content: "\2191";
-            right: 0.5em;
-        }
-        
-        table.dataTable thead .sorting:after,
-        table.dataTable thead .sorting_asc:after,
-        table.dataTable thead .sorting_desc:after,
-        table.dataTable thead .sorting_asc_disabled:after,
-        table.dataTable thead .sorting_desc_disabled:after {
-            content: "\2193";
-            right: 0.3em;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body>
-    <!-- Botão hamburger -->
-    <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
-        <i class="bi bi-list"></i>
+<body class="app-shell antialiased">
+    <button id="menuToggle"
+        class="fixed left-4 top-4 z-50 rounded-lg bg-secondary px-3 py-2 text-white shadow-md transition hover:bg-primary focus:outline-none focus:ring-2 focus:ring-primary lg:hidden"
+        aria-label="Abrir menu">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
     </button>
 
-    <!-- Overlay para fechar menu -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm lg:hidden hidden"></div>
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 sidebar p-0 hidden" id="sidebar">
-                <div class="p-3 text-white">
-                    <h4>Sistema de Demandas</h4>
+    <div class="flex min-h-screen w-full">
+        <nav id="sidebar"
+            class="sidebar fixed inset-y-0 left-0 z-40 w-64 -translate-x-full transform bg-secondary text-white transition-transform duration-300 ease-in-out lg:relative lg:flex lg:translate-x-0 lg:flex-col">
+            <div class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+                <div>
+                    <p class="text-sm uppercase tracking-widest text-white/60">Sistema</p>
+                    <h4 class="text-xl font-semibold text-white">Gestão de Demandas</h4>
                 </div>
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link @if (request()->routeIs('dashboard')) active @endif"
-                            href="{{ route('dashboard') }}">
-                            <i class="bi bi-speedometer2"></i> Dashboard
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-3 py-4">
+                <ul class="space-y-1 text-sm font-medium">
+                    <li>
+                        <a href="{{ route('dashboard') }}"
+                            @class([
+                                'sidebar-link',
+                                'sidebar-link-active' => request()->routeIs('dashboard'),
+                            ])>
+                            <span class="text-lg">📊</span>
+                            Dashboard
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link @if (request()->routeIs('demandas.*')) active @endif"
-                            href="{{ route('demandas.index') }}">
-                            <i class="bi bi-file-text"></i> Demandas
+                    <li>
+                        <a href="{{ route('demandas.index') }}"
+                            @class([
+                                'sidebar-link',
+                                'sidebar-link-active' => request()->routeIs('demandas.*'),
+                            ])>
+                            <span class="text-lg">🗂️</span>
+                            Demandas
                         </a>
                     </li>
                     @auth
                         @if (auth()->user()->isAdmin())
-                            <li class="nav-item">
-                                <a class="nav-link @if (request()->routeIs('users.*')) active @endif"
-                                    href="{{ route('users.index') }}">
-                                    <i class="bi bi-people-fill"></i> Usuários
+                            <li>
+                                <a href="{{ route('users.index') }}"
+                                    @class([
+                                        'sidebar-link',
+                                        'sidebar-link-active' => request()->routeIs('users.*'),
+                                    ])>
+                                    <span class="text-lg">👥</span>
+                                    Usuários
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link @if (request()->routeIs('clientes.*')) active @endif"
-                                    href="{{ route('clientes.index') }}">
-                                    <i class="bi bi-people"></i> Clientes
+                            <li>
+                                <a href="{{ route('clientes.index') }}"
+                                    @class([
+                                        'sidebar-link',
+                                        'sidebar-link-active' => request()->routeIs('clientes.*'),
+                                    ])>
+                                    <span class="text-lg">🏢</span>
+                                    Clientes
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link @if (request()->routeIs('projetos.*')) active @endif"
-                                    href="{{ route('projetos.index') }}">
-                                    <i class="bi bi-folder"></i> Projetos
+                            <li>
+                                <a href="{{ route('projetos.index') }}"
+                                    @class([
+                                        'sidebar-link',
+                                        'sidebar-link-active' => request()->routeIs('projetos.*'),
+                                    ])>
+                                    <span class="text-lg">📁</span>
+                                    Projetos
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link @if (request()->routeIs('status.*')) active @endif"
-                                    href="{{ route('status.index') }}">
-                                    <i class="bi bi-tag"></i> Status
+                            <li>
+                                <a href="{{ route('status.index') }}"
+                                    @class([
+                                        'sidebar-link',
+                                        'sidebar-link-active' => request()->routeIs('status.*'),
+                                    ])>
+                                    <span class="text-lg">🏷️</span>
+                                    Status
                                 </a>
                             </li>
                         @endif
                     @endauth
                 </ul>
-                <div class="p-3">
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-light w-100">
-                            <i class="bi bi-box-arrow-right"></i> Sair
-                        </button>
-                    </form>
-                </div>
-            </nav>
+            </div>
 
-            <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 main-content p-4">
+            <div class="border-t border-white/10 px-4 py-4">
+                <form method="POST" action="{{ route('logout') }}" class="space-y-3">
+                    @csrf
+                    <button type="submit"
+                        class="flex w-full items-center justify-center gap-2 rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white hover:bg-white/10">
+                        <span>⏏️</span> Sair
+                    </button>
+                </form>
+            </div>
+        </nav>
+
+        <main class="flex-1 px-4 py-6 lg:px-8">
+            <div class="app-main">
+                <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm uppercase tracking-widest text-slate-500">Painel</p>
+                        <h1 class="text-2xl font-semibold text-slate-900">@yield('title', 'Sistema de Gestão de Demandas')</h1>
+                    </div>
+                    @auth
+                        <div
+                            class="flex items-center gap-3 rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm">
+                            <span class="text-xl">👤</span>
+                            {{ auth()->user()->nome }}
+                        </div>
+                    @endauth
+                </header>
+
                 @if (session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <div class="alert alert-success" data-alert data-auto-dismiss="5000">
+                        <span class="alert-icon">✅</span>
+                        <div class="alert-body">
+                            {{ session('success') }}
+                        </div>
+                        <button type="button" class="alert-close" data-alert-close aria-label="Fechar alerta">✕</button>
                     </div>
                 @endif
 
                 @if (session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <div class="alert alert-error" data-alert>
+                        <span class="alert-icon">⚠️</span>
+                        <div class="alert-body">
+                            {{ session('error') }}
+                        </div>
+                        <button type="button" class="alert-close" data-alert-close aria-label="Fechar alerta">✕</button>
                     </div>
                 @endif
 
                 @if ($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <div class="alert alert-error" data-alert>
+                        <span class="alert-icon">🚫</span>
+                        <div class="alert-body">
+                            <p class="font-semibold">Ocorreram alguns erros:</p>
+                            <ul class="mt-2 list-inside list-disc space-y-1 text-sm">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <button type="button" class="alert-close" data-alert-close aria-label="Fechar alerta">✕</button>
                     </div>
                 @endif
 
-                @yield('content')
-            </main>
-        </div>
+                <section class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 lg:p-6">
+                    @yield('content')
+                </section>
+            </div>
+        </main>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script>
-        // Toggle do menu mobile
-        const menuToggle = document.getElementById('menuToggle');
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-
-        function toggleMenu() {
-            sidebar.classList.toggle('hidden');
-            overlay.classList.toggle('active');
-        }
-
-        menuToggle.addEventListener('click', toggleMenu);
-        overlay.addEventListener('click', toggleMenu);
-
-        // Fechar menu ao clicar em um link (mobile)
-        const navLinks = document.querySelectorAll('.sidebar .nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth < 992) {
-                    toggleMenu();
-                }
-            });
-        });
-
-        // Fechar menu ao clicar no botão de logout (mobile)
-        const logoutBtn = document.querySelector('.sidebar form button');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                if (window.innerWidth < 992) {
-                    toggleMenu();
-                }
-            });
-        }
-
-        // Auto-fechar alertas após 5 segundos
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
-            const bsAlert = new bootstrap.Alert(alert);
-            setTimeout(() => {
-                bsAlert.close();
-            }, 5000);
-        });
-    </script>
     @yield('scripts')
+    @stack('scripts')
 </body>
 
 </html>

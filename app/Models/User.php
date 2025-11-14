@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
+use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasName
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -86,5 +89,15 @@ class User extends Authenticatable
     public function projetos()
     {
         return $this->belongsToMany(Projeto::class, 'projeto_user');
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->canManageSystem() || $this->isGestor();
+    }
+
+    public function getFilamentName(): string
+    {
+        return $this->nome ?: ($this->email ?: 'Usuário');
     }
 }
