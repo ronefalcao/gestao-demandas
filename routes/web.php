@@ -8,6 +8,15 @@ use App\Http\Controllers\ProjetoController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+
+// Redireciona a raiz para /admin/login
+Route::get('/', function () {
+    if (Auth::check()) {
+        return redirect('/admin');
+    }
+    return redirect('/admin/login');
+});
 
 // Login Routes
 Route::middleware('guest')->group(function () {
@@ -20,7 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Demandas Routes - Todos os usuários autenticados podem acessar
     Route::resource('demandas', DemandaController::class);
