@@ -52,6 +52,29 @@
                         </span>
                     </p>
                 </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Prioridade</p>
+                    <p class="mt-1">
+                        @php
+                            $prioridadeCor = match($record->prioridade ?? 'media') {
+                                'baixa' => ['bg' => '#10b981', 'text' => '#065f46'], // verde
+                                'media' => ['bg' => '#f59e0b', 'text' => '#92400e'], // amarela
+                                'alta' => ['bg' => '#ef4444', 'text' => '#991b1b'], // vermelha
+                                default => ['bg' => '#6b7280', 'text' => '#374151'],
+                            };
+                            $prioridadeLabel = match($record->prioridade ?? 'media') {
+                                'baixa' => 'Baixa',
+                                'media' => 'Média',
+                                'alta' => 'Alta',
+                                default => ucfirst($record->prioridade ?? 'Média'),
+                            };
+                        @endphp
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                              style="background-color: {{ $prioridadeCor['bg'] }}20; color: {{ $prioridadeCor['text'] }};">
+                            {{ $prioridadeLabel }}
+                        </span>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
