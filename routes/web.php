@@ -10,8 +10,10 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Login Routes
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+});
 
 Route::middleware('auth')->group(function () {
     // Logout
@@ -26,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::get('demandas-exportar', [DemandaController::class, 'exportarPdf'])->name('demandas.exportar');
     Route::post('demandas/{demanda}/arquivos', [DemandaController::class, 'uploadArquivo'])->name('demandas.arquivos.upload');
     Route::get('demandas/arquivos/{arquivo}/download', [DemandaController::class, 'downloadArquivo'])->name('demandas.arquivos.download');
+    Route::get('demandas/arquivos/{arquivo}/view', [DemandaController::class, 'viewArquivo'])->name('demandas.arquivos.view');
     Route::delete('demandas/arquivos/{arquivo}', [DemandaController::class, 'deletarArquivo'])->name('demandas.arquivos.delete');
 
     // Rotas apenas para administradores
