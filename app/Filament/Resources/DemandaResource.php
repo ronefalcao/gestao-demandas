@@ -135,6 +135,16 @@ class DemandaResource extends Resource
                                 return Status::pluck('nome', 'id');
                             })
                             ->default(fn() => Status::where('nome', 'Solicitada')->first()?->id),
+                        Forms\Components\Select::make('prioridade')
+                            ->label('Prioridade')
+                            ->options([
+                                'baixa' => 'Baixa',
+                                'media' => 'Média',
+                                'alta' => 'Alta',
+                            ])
+                            ->required()
+                            ->default('media')
+                            ->native(false),
                     ])
                     ->columns(2),
                 Forms\Components\Section::make('Observações')
@@ -190,6 +200,23 @@ class DemandaResource extends Resource
                     ->color(fn($record) => $record->status->cor ?? 'gray')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('prioridade')
+                    ->label('Prioridade')
+                    ->badge()
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'baixa' => 'Baixa',
+                        'media' => 'Média',
+                        'alta' => 'Alta',
+                        default => ucfirst($state),
+                    })
+                    ->color(fn($state) => match ($state) {
+                        'baixa' => 'success', // verde
+                        'media' => 'warning', // amarela
+                        'alta' => 'danger', // vermelha
+                        default => 'gray',
+                    })
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Criado em')
                     ->dateTime('d/m/Y H:i')
@@ -202,6 +229,13 @@ class DemandaResource extends Resource
                     ->relationship('status', 'nome')
                     ->searchable()
                     ->preload(),
+                Tables\Filters\SelectFilter::make('prioridade')
+                    ->label('Prioridade')
+                    ->options([
+                        'baixa' => 'Baixa',
+                        'media' => 'Média',
+                        'alta' => 'Alta',
+                    ]),
                 Tables\Filters\SelectFilter::make('cliente_id')
                     ->label('Cliente')
                     ->relationship('cliente', 'nome')

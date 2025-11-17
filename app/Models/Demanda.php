@@ -19,6 +19,7 @@ class Demanda extends Model
         'modulo',
         'descricao',
         'status_id',
+        'prioridade',
         'observacao',
     ];
 
