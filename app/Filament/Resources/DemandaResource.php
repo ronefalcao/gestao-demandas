@@ -203,13 +203,13 @@ class DemandaResource extends Resource
                 Tables\Columns\TextColumn::make('prioridade')
                     ->label('Prioridade')
                     ->badge()
-                    ->formatStateUsing(fn($state) => match($state) {
+                    ->formatStateUsing(fn($state) => match ($state) {
                         'baixa' => 'Baixa',
                         'media' => 'Média',
                         'alta' => 'Alta',
                         default => ucfirst($state),
                     })
-                    ->color(fn($state) => match($state) {
+                    ->color(fn($state) => match ($state) {
                         'baixa' => 'success', // verde
                         'media' => 'warning', // amarela
                         'alta' => 'danger', // vermelha
