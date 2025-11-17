@@ -3,14 +3,18 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use App\Models\Projeto;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Components\TextInput\Mask;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserResource extends Resource
 {
@@ -18,60 +22,70 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationGroup = 'Administração';
+    protected static ?string $navigationLabel = 'Usuários';
+
+    protected static ?int $navigationSort = 4;
+
+    public static function canViewAny(): bool
+    {
+        $user = Auth::user();
+        return $user && ($user->canManageSystem() || $user->isGestor());
+    }
+
+    public static function canCreate(): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
+
+    public static function canDelete($record): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Dados pessoais')
-                    ->schema([
-                        Forms\Components\TextInput::make('nome')
-                            ->label('Nome completo')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('email')
-                            ->label('E-mail')
-                            ->email()
-                            ->required()
-                            ->maxLength(255)
-                            ->unique(ignoreRecord: true),
-                        Forms\Components\TextInput::make('telefone')
-                            ->tel()
-                            ->mask(fn (Mask $mask) => $mask->pattern('(00) 00000-0000'))
-                            ->maxLength(20)
-                            ->label('Telefone')
-                            ->helperText('Opcional'),
-                    ]),
-                Forms\Components\Section::make('Credenciais de acesso')
-                    ->schema([
-                        Forms\Components\Select::make('tipo')
-                            ->label('Perfil')
-                            ->options([
-                                'administrador' => 'Administrador',
-                                'gestor' => 'Gestor',
-                                'usuario' => 'Usuário',
-                            ])
-                            ->default('usuario')
-                            ->required()
-                            ->native(false),
-                        Forms\Components\TextInput::make('password')
-                            ->label('Senha')
-                            ->password()
-                            ->revealable()
-                            ->required(fn (string $context) => $context === 'create')
-                            ->dehydrateStateUsing(fn (?string $state) => filled($state) ? Hash::make($state) : null)
-                            ->dehydrated(fn (?string $state) => filled($state))
-                            ->minLength(8)
-                            ->same('password_confirmation'),
-                        Forms\Components\TextInput::make('password_confirmation')
-                            ->label('Confirmar senha')
-                            ->password()
-                            ->revealable()
-                            ->dehydrated(false)
-                            ->required(fn (string $context) => $context === 'create'),
+                Forms\Components\TextInput::make('nome')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('email')
+                    ->email()
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('telefone')
+                    ->tel()
+                    ->maxLength(20),
+                Forms\Components\DateTimePicker::make('email_verified_at'),
+                Forms\Components\TextInput::make('password')
+                    ->password()
+                    ->required(fn(string $operation): bool => $operation === 'create')
+                    ->dehydrated(fn($state) => filled($state))
+                    ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                    ->maxLength(255),
+                Forms\Components\Select::make('tipo')
+                    ->required()
+                    ->options([
+                        'administrador' => 'Administrador',
+                        'gestor' => 'Gestor',
+                        'usuario' => 'Usuário',
                     ])
-                    ->columns(2),
+                    ->default('usuario'),
+                Forms\Components\Select::make('projetos')
+                    ->label('Projetos com Acesso')
+                    ->relationship('projetos', 'nome')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->visible(fn($get) => $get('tipo') !== 'administrador'),
             ]);
     }
 
@@ -80,44 +94,50 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nome')
-                    ->label('Nome')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('email')
-                    ->label('E-mail')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('telefone')
-                    ->label('Telefone')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('email_verified_at')
+                    ->dateTime()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('tipo')
-                    ->label('Perfil')
+                    ->searchable()
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'administrador' => 'success',
-                        'gestor' => 'info',
+                    ->color(fn(string $state): string => match ($state) {
+                        'administrador' => 'danger',
+                        'gestor' => 'warning',
+                        'usuario' => 'info',
                         default => 'gray',
                     }),
+                Tables\Columns\TextColumn::make('projetos.nome')
+                    ->label('Projetos')
+                    ->badge()
+                    ->separator(',')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado em')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('tipo')
-                    ->label('Filtrar por perfil')
-                    ->options([
-                        'administrador' => 'Administrador',
-                        'gestor' => 'Gestor',
-                        'usuario' => 'Usuário',
-                    ]),
+                //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn() => Auth::user()?->isGestor() ?? false),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => Auth::user()?->canManageSystem() ?? false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => Auth::user()?->canManageSystem() ?? false),
                 ]),
             ]);
     }

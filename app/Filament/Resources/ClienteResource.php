@@ -3,12 +3,16 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClienteResource\Pages;
+use App\Filament\Resources\ClienteResource\RelationManagers;
 use App\Models\Cliente;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class ClienteResource extends Resource
 {
@@ -16,9 +20,37 @@ class ClienteResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
 
-    protected static ?string $navigationGroup = 'Cadastros';
+    protected static ?int $navigationSort = 2;
 
-    protected static ?int $navigationSort = 1;
+    public static function canViewAny(): bool
+    {
+        $user = Auth::user();
+        return $user && ($user->canManageSystem() || $user->isGestor());
+    }
+
+    public static function canCreate(): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
+
+    public static function canView($record): bool
+    {
+        $user = Auth::user();
+        return $user && ($user->canManageSystem() || $user->isGestor());
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
+
+    public static function canDelete($record): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
 
     public static function form(Form $form): Form
     {
@@ -26,9 +58,7 @@ class ClienteResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('nome')
                     ->required()
-                    ->maxLength(255)
-                    ->unique(ignoreRecord: true)
-                    ->label('Nome do cliente'),
+                    ->maxLength(255),
             ]);
     }
 
@@ -37,15 +67,21 @@ class ClienteResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nome')
-                    ->label('Cliente')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('demandas_count')
-                    ->counts('demandas')
-                    ->label('Demandas')
-                    ->badge(),
+                    ->label('Demandas Não Concluídas')
+                    ->badge()
+                    ->color('warning')
+                    ->default(0)
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Criado em')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Atualizado em')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -54,11 +90,15 @@ class ClienteResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn() => (Auth::user()?->canManageSystem() ?? false) || (Auth::user()?->isGestor() ?? false)),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => Auth::user()?->canManageSystem() ?? false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => Auth::user()?->canManageSystem() ?? false),
                 ]),
             ]);
     }
@@ -66,7 +106,7 @@ class ClienteResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\DemandasRelationManager::class,
         ];
     }
 
@@ -75,6 +115,7 @@ class ClienteResource extends Resource
         return [
             'index' => Pages\ListClientes::route('/'),
             'create' => Pages\CreateCliente::route('/create'),
+            'view' => Pages\ViewCliente::route('/{record}'),
             'edit' => Pages\EditCliente::route('/{record}/edit'),
         ];
     }

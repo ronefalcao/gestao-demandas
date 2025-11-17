@@ -5,7 +5,6 @@ namespace App\Models;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Filament\Panel;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -48,7 +47,10 @@ class User extends Authenticatable implements FilamentUser, HasName
      */
     public function isAdmin(): bool
     {
-        return $this->tipo === 'administrador';
+        if (empty($this->tipo)) {
+            return false;
+        }
+        return trim(strtolower((string) $this->tipo)) === 'administrador';
     }
 
     /**
@@ -56,7 +58,7 @@ class User extends Authenticatable implements FilamentUser, HasName
      */
     public function isGestor(): bool
     {
-        return $this->tipo === 'gestor';
+        return strtolower((string) $this->tipo) === 'gestor';
     }
 
     /**
@@ -64,7 +66,7 @@ class User extends Authenticatable implements FilamentUser, HasName
      */
     public function isUsuario(): bool
     {
-        return $this->tipo === 'usuario';
+        return strtolower((string) $this->tipo) === 'usuario';
     }
 
     /**
@@ -93,11 +95,12 @@ class User extends Authenticatable implements FilamentUser, HasName
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->canManageSystem() || $this->isGestor();
+        // Permite acesso para administradores, gestores e usuários comuns
+        return $this->canManageSystem() || $this->isGestor() || $this->isUsuario();
     }
 
     public function getFilamentName(): string
     {
-        return $this->nome ?: ($this->email ?: 'Usuário');
+        return trim((string) ($this->nome ?: $this->email ?: 'Usuário'));
     }
 }
