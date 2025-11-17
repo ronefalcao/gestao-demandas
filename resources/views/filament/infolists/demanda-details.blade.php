@@ -47,8 +47,31 @@
                     <p class="text-sm font-medium text-gray-500">Status</p>
                     <p class="mt-1">
                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                              style="background-color: {{ $record->status->cor ?? '#6b7280' }}20; color: {{ $record->status->cor ?? '#6b7280' }};">
+                            style="background-color: {{ $record->status->cor ?? '#6b7280' }}20; color: {{ $record->status->cor ?? '#6b7280' }};">
                             {{ $record->status->nome ?? '-' }}
+                        </span>
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Prioridade</p>
+                    <p class="mt-1">
+                        @php
+                            $prioridadeCor = match ($record->prioridade ?? 'media') {
+                                'baixa' => ['bg' => '#10b981', 'text' => '#065f46'], // verde
+                                'media' => ['bg' => '#f59e0b', 'text' => '#92400e'], // amarela
+                                'alta' => ['bg' => '#ef4444', 'text' => '#991b1b'], // vermelha
+                                default => ['bg' => '#6b7280', 'text' => '#374151'],
+                            };
+                            $prioridadeLabel = match ($record->prioridade ?? 'media') {
+                                'baixa' => 'Baixa',
+                                'media' => 'Média',
+                                'alta' => 'Alta',
+                                default => ucfirst($record->prioridade ?? 'Média'),
+                            };
+                        @endphp
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                            style="background-color: {{ $prioridadeCor['bg'] }}20; color: {{ $prioridadeCor['text'] }};">
+                            {{ $prioridadeLabel }}
                         </span>
                     </p>
                 </div>
@@ -57,11 +80,11 @@
     </div>
 
     {{-- Observações --}}
-    @if($record->observacao)
-    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 class="mb-4 text-lg font-semibold text-gray-900">Observações</h3>
-        <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ $record->observacao }}</p>
-    </div>
+    @if ($record->observacao)
+        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 class="mb-4 text-lg font-semibold text-gray-900">Observações</h3>
+            <p class="text-sm text-gray-900 whitespace-pre-wrap">{{ $record->observacao }}</p>
+        </div>
     @endif
 
     {{-- Informações de Controle --}}
@@ -79,5 +102,3 @@
         </div>
     </div>
 </div>
-
-
