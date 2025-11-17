@@ -402,7 +402,7 @@ class DemandaController extends Controller
         }
 
         $request->validate([
-            'arquivo' => 'required|file|mimes:pdf,jpeg,jpg,png|max:10240', // 10MB max
+            'arquivo' => 'required|file|mimes:pdf,jpeg,jpg,png,mp4|max:10240', // 10MB max
         ]);
 
         $arquivo = $request->file('arquivo');
@@ -442,6 +442,37 @@ class DemandaController extends Controller
 
         $path = Storage::disk('public')->path($arquivo->caminho);
         return Response::download($path, $arquivo->nome_original);
+    }
+
+    public function viewArquivo(DemandaArquivo $arquivo)
+    {
+        $user = auth()->user();
+        $demanda = $arquivo->demanda;
+
+        // Verificar se o usuário tem acesso à demanda
+        if (!$user->isAdmin()) {
+            $projetosIds = $user->projetos()->pluck('projetos.id');
+            if (!in_array($demanda->projeto_id, $projetosIds->toArray())) {
+                abort(403, 'Você não tem permissão para visualizar este arquivo.');
+            }
+
+            // Usuário comum só pode visualizar arquivos de suas próprias demandas (que ele criou)
+            if ($user->isUsuario() && $demanda->solicitante_id !== $user->id) {
+                abort(403, 'Você não tem permissão para visualizar este arquivo.');
+            }
+        }
+
+        if (!Storage::disk('public')->exists($arquivo->caminho)) {
+            abort(404, 'Arquivo não encontrado.');
+        }
+
+        $file = Storage::disk('public')->get($arquivo->caminho);
+        $mimeType = Storage::disk('public')->mimeType($arquivo->caminho);
+
+        return Response::make($file, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $arquivo->nome_original . '"',
+        ]);
     }
 
     public function deletarArquivo(DemandaArquivo $arquivo)

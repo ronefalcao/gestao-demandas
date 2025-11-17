@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasName
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -45,7 +47,10 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->tipo === 'administrador';
+        if (empty($this->tipo)) {
+            return false;
+        }
+        return trim(strtolower((string) $this->tipo)) === 'administrador';
     }
 
     /**
@@ -53,7 +58,7 @@ class User extends Authenticatable
      */
     public function isGestor(): bool
     {
-        return $this->tipo === 'gestor';
+        return strtolower((string) $this->tipo) === 'gestor';
     }
 
     /**
@@ -61,7 +66,7 @@ class User extends Authenticatable
      */
     public function isUsuario(): bool
     {
-        return $this->tipo === 'usuario';
+        return strtolower((string) $this->tipo) === 'usuario';
     }
 
     /**
@@ -86,5 +91,16 @@ class User extends Authenticatable
     public function projetos()
     {
         return $this->belongsToMany(Projeto::class, 'projeto_user');
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // Permite acesso para administradores, gestores e usuários comuns
+        return $this->canManageSystem() || $this->isGestor() || $this->isUsuario();
+    }
+
+    public function getFilamentName(): string
+    {
+        return trim((string) ($this->nome ?: $this->email ?: 'Usuário'));
     }
 }

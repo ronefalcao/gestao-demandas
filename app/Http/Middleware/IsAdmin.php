@@ -16,7 +16,7 @@ class IsAdmin
     public function handle(Request $request, Closure $next): Response
     {
         $user = auth()->user();
-        if (!$user || $user->tipo !== 'administrador') {
+        if (!$user || !$user->isAdmin()) {
             abort(403, 'Acesso negado. Apenas administradores podem acessar esta área.');
         }
 
