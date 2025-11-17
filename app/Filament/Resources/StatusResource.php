@@ -3,12 +3,16 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\StatusResource\Pages;
+use App\Filament\Resources\StatusResource\RelationManagers;
 use App\Models\Status;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class StatusResource extends Resource
 {
@@ -16,9 +20,34 @@ class StatusResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
 
-    protected static ?string $navigationGroup = 'Cadastros';
+    protected static ?string $navigationLabel = 'Status';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 5;
+
+    public static function canViewAny(): bool
+    {
+        // Status só aparece para Administradores
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
+
+    public static function canCreate(): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
+
+    public static function canDelete($record): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
 
     public static function form(Form $form): Form
     {
@@ -26,17 +55,12 @@ class StatusResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('nome')
                     ->required()
-                    ->maxLength(255)
-                    ->label('Título do status'),
+                    ->maxLength(255),
                 Forms\Components\ColorPicker::make('cor')
-                    ->label('Cor')
-                    ->default('#0F6EBF')
-                    ->required(),
+                    ->default('#0F6EBF'),
                 Forms\Components\TextInput::make('ordem')
                     ->required()
                     ->numeric()
-                    ->minValue(0)
-                    ->label('Ordem de exibição')
                     ->default(0),
             ]);
     }
@@ -46,17 +70,17 @@ class StatusResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nome')
-                    ->label('Status')
-                    ->sortable()
                     ->searchable(),
-                Tables\Columns\ColorColumn::make('cor')
-                    ->label('Cor'),
+                Tables\Columns\TextColumn::make('cor')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('ordem')
-                    ->label('Ordem')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado em')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -65,11 +89,15 @@ class StatusResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn() => Auth::user()?->isGestor() ?? false),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => Auth::user()?->canManageSystem() ?? false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => Auth::user()?->canManageSystem() ?? false),
                 ]),
             ]);
     }

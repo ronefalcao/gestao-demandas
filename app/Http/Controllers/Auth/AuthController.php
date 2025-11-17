@@ -12,14 +12,27 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        return redirect()->route('filament.admin.auth.login');
+        if (Auth::check()) {
+            return redirect()->route('dashboard');
+        }
+        return view('auth.login');
     }
 
     public function login(Request $request)
     {
-        return redirect()
-            ->route('filament.admin.auth.login')
-            ->with('status', 'Realize o acesso pelo painel administrativo.');
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            return redirect()->route('dashboard');
+        }
+
+        return back()->withErrors([
+            'email' => 'As credenciais fornecidas não correspondem aos nossos registros.',
+        ])->onlyInput('email');
     }
 
     public function logout(Request $request)
@@ -27,9 +40,6 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('filament.admin.auth.login');
+        return redirect()->route('login');
     }
 }
-
-
-

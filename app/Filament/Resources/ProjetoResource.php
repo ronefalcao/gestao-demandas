@@ -3,12 +3,16 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjetoResource\Pages;
+use App\Filament\Resources\ProjetoResource\RelationManagers;
 use App\Models\Projeto;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class ProjetoResource extends Resource
 {
@@ -16,39 +20,43 @@ class ProjetoResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-folder';
 
-    protected static ?string $navigationGroup = 'Cadastros';
+    protected static ?int $navigationSort = 3;
 
-    protected static ?int $navigationSort = 2;
+    public static function canViewAny(): bool
+    {
+        $user = Auth::user();
+        return $user && ($user->canManageSystem() || $user->isGestor());
+    }
+
+    public static function canCreate(): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
+
+    public static function canDelete($record): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageSystem();
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Dados do projeto')
-                    ->schema([
-                        Forms\Components\TextInput::make('nome')
-                            ->required()
-                            ->maxLength(255)
-                            ->label('Nome'),
-                        Forms\Components\Textarea::make('descricao')
-                            ->rows(4)
-                            ->columnSpanFull()
-                            ->label('Descrição'),
-                        Forms\Components\Toggle::make('ativo')
-                            ->default(true)
-                            ->label('Projeto ativo'),
-                    ]),
-                Forms\Components\Section::make('Equipe envolvida')
-                    ->schema([
-                        Forms\Components\Select::make('users')
-                            ->relationship('users', 'nome')
-                            ->multiple()
-                            ->preload()
-                            ->searchable()
-                            ->label('Usuários vinculados')
-                            ->helperText('Selecione quais usuários participam deste projeto.'),
-                    ])
+                Forms\Components\TextInput::make('nome')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\Textarea::make('descricao')
                     ->columnSpanFull(),
+                Forms\Components\Toggle::make('ativo')
+                    ->required(),
             ]);
     }
 
@@ -57,37 +65,31 @@ class ProjetoResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nome')
-                    ->label('Projeto')
-                    ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('descricao')
-                    ->limit(40)
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('ativo')
-                    ->label('Ativo')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('users_count')
-                    ->counts('users')
-                    ->label('Membros')
-                    ->badge(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado em')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('ativo')
-                    ->label('Somente ativos')
-                    ->trueLabel('Ativos')
-                    ->falseLabel('Inativos'),
+                //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn() => Auth::user()?->isGestor() ?? false),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => Auth::user()?->canManageSystem() ?? false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => Auth::user()?->canManageSystem() ?? false),
                 ]),
             ]);
     }

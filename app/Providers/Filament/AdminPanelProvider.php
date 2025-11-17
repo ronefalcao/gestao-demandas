@@ -27,21 +27,17 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Gestão de Demandas')
             ->colors([
                 'primary' => Color::hex('#0F6EBF'),
-                'secondary' => Color::hex('#08253D'),
             ])
-            ->viteTheme('resources/css/filament/admin/theme.css')
+            ->brandName('Gestão de Demandas')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-            ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                \App\Filament\Widgets\StatsOverviewWidget::class,
+                \App\Filament\Widgets\DemandasPorStatusCustomWidget::class,
+                \App\Filament\Widgets\DemandasRecentesWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

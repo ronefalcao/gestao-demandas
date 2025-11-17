@@ -112,11 +112,11 @@
                         <div class="row">
                             <div class="col-md-8">
                                 <input type="file" class="form-control @error('arquivo') is-invalid @enderror"
-                                    name="arquivo" accept=".pdf,.jpeg,.jpg,.png" required>
+                                    name="arquivo" accept=".pdf,.jpeg,.jpg,.png,.mp4" required>
                                 @error('arquivo')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <small class="text-muted">Formatos aceitos: PDF, JPEG, JPG, PNG (máximo 10MB)</small>
+                                <small class="text-muted">Formatos aceitos: PDF, JPEG, JPG, PNG, MP4 (máximo 10MB)</small>
                             </div>
                             <div class="col-md-4">
                                 <button type="submit" class="btn btn-primary w-100">
