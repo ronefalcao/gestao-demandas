@@ -30,6 +30,12 @@ COPY . .
 # Instala dependências do PHP
 RUN composer install --optimize-autoloader --no-dev
 
+# Limpa o cache do Laravel e Filament
+RUN php artisan optimize:clear || true
+RUN php artisan config:clear || true
+RUN php artisan route:clear || true
+RUN php artisan view:clear || true
+
 # Permissões
 RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www
 
