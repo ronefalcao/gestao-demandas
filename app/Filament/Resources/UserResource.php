@@ -76,6 +76,8 @@ class UserResource extends Resource
                     ->options([
                         'administrador' => 'Administrador',
                         'gestor' => 'Gestor',
+                        'analista' => 'Analista',
+                        'planejador' => 'Planejador',
                         'usuario' => 'Usuário',
                     ])
                     ->default('usuario'),
@@ -108,6 +110,8 @@ class UserResource extends Resource
                     ->color(fn(string $state): string => match ($state) {
                         'administrador' => 'danger',
                         'gestor' => 'warning',
+                        'analista' => 'success',
+                        'planejador' => 'purple',
                         'usuario' => 'info',
                         default => 'gray',
                     }),

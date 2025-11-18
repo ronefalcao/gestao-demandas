@@ -12,6 +12,11 @@ class ViewCliente extends ViewRecord
 {
     protected static string $resource = ClienteResource::class;
 
+    public function getTitle(): string
+    {
+        return '';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Gestão de Demandas')</title>
+    <title>@yield('title', 'G&T Demandas')</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -26,7 +26,7 @@
                 </div>
                 <div>
                     <p class="text-uppercase text-white-50 small mb-1">Sistema</p>
-                    <strong>Gestão de Demandas</strong>
+                    <strong>G&T Demandas</strong>
                 </div>
             </div>
 
@@ -81,7 +81,7 @@
             <header class="app-header d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
                 <div>
                     <p class="text-uppercase text-muted small mb-1">Painel</p>
-                    <h1 class="h4 mb-0">@yield('title', 'Gestão de Demandas')</h1>
+                    <h1 class="h4 mb-0">@yield('title', 'G&T Demandas')</h1>
                 </div>
                 @auth
                     <div class="app-user-chip d-flex align-items-center gap-2">

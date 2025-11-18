@@ -12,6 +12,11 @@ class CreateDemanda extends CreateRecord
 {
     protected static string $resource = DemandaResource::class;
 
+    public function getTitle(): string
+    {
+        return '';
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $user = Auth::user();
@@ -19,9 +24,10 @@ class CreateDemanda extends CreateRecord
         // Se o usuário for do tipo "usuario", definir automaticamente o solicitante e status
         if ($user && $user->isUsuario()) {
             $data['solicitante_id'] = $user->id;
-            $statusSolicitada = Status::where('nome', 'Solicitada')->first();
-            if ($statusSolicitada) {
-                $data['status_id'] = $statusSolicitada->id;
+            // Criar demanda com status "Rascunho" para permitir edição/exclusão
+            $statusRascunho = Status::where('nome', 'Rascunho')->first();
+            if ($statusRascunho) {
+                $data['status_id'] = $statusRascunho->id;
             }
         }
 

@@ -14,6 +14,13 @@ class DemandasRecentesWidget extends BaseWidget
 
     protected static ?int $sort = 2;
 
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+        // Não mostrar para planejadores e gestores
+        return $user && !$user->isPlanejador() && !$user->isGestor();
+    }
+
     public function table(Table $table): Table
     {
         $user = Auth::user();
@@ -33,47 +40,70 @@ class DemandasRecentesWidget extends BaseWidget
             }
         }
 
+        // Excluir rascunhos de outros usuários (apenas o criador vê seus rascunhos)
+        $baseQuery->excludeRascunhosFromOthers($user->id);
+
+        $columns = [
+            Tables\Columns\TextColumn::make('numero')
+                ->label('Número')
+                ->searchable()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('data')
+                ->label('Data')
+                ->date('d/m/Y')
+                ->sortable(),
+            Tables\Columns\TextColumn::make('cliente.nome')
+                ->label('Cliente')
+                ->searchable()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('projeto.nome')
+                ->label('Projeto')
+                ->searchable()
+                ->sortable()
+                ->default('-'),
+            Tables\Columns\TextColumn::make('modulo')
+                ->label('Módulo')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('status.nome')
+                ->label('Status')
+                ->badge()
+                ->color(fn($record) => $record->status->cor ?? 'gray')
+                ->searchable()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('prioridade')
+                ->label('Prioridade')
+                ->badge()
+                ->formatStateUsing(fn($state) => match ($state) {
+                    'baixa' => 'Baixa',
+                    'media' => 'Média',
+                    'alta' => 'Alta',
+                    default => ucfirst($state),
+                })
+                ->color(fn($state) => match ($state) {
+                    'baixa' => 'success',
+                    'media' => 'warning',
+                    'alta' => 'danger',
+                    default => 'gray',
+                })
+                ->searchable()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('descricao')
+                ->label('Descrição')
+                ->limit(60)
+                ->searchable(),
+        ];
+
+        // Adicionar coluna solicitante apenas se não for usuário comum
+        if (!$user->isUsuario()) {
+            $columns[] = Tables\Columns\TextColumn::make('solicitante.nome')
+                ->label('Solicitante')
+                ->searchable();
+        }
+
         return $table
             ->query($baseQuery->with(['cliente', 'projeto', 'solicitante', 'responsavel', 'status']))
-            ->columns([
-                Tables\Columns\TextColumn::make('numero')
-                    ->label('Número')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('data')
-                    ->label('Data')
-                    ->date('d/m/Y')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('cliente.nome')
-                    ->label('Cliente')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('projeto.nome')
-                    ->label('Projeto')
-                    ->searchable()
-                    ->sortable()
-                    ->default('-'),
-                Tables\Columns\TextColumn::make('modulo')
-                    ->label('Módulo')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('descricao')
-                    ->label('Descrição')
-                    ->limit(60)
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('status.nome')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn($record) => $record->status->cor ?? 'gray'),
-                Tables\Columns\TextColumn::make('solicitante.nome')
-                    ->label('Solicitante')
-                    ->searchable(),
-            ])
-            ->actions([
-                Tables\Actions\Action::make('view')
-                    ->label('Detalhes')
-                    ->url(fn(Demanda $record): string => \App\Filament\Resources\DemandaResource::getUrl('view', ['record' => $record]))
-                    ->icon('heroicon-o-eye'),
-            ])
+            ->recordUrl(fn(Demanda $record): string => \App\Filament\Resources\DemandaResource::getUrl('view', ['record' => $record]))
+            ->columns($columns)
             ->defaultSort('created_at', 'desc')
             ->paginated([10]);
     }

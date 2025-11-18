@@ -31,26 +31,67 @@ class DemandaResource extends Resource
     public static function canViewAny(): bool
     {
         $user = Auth::user();
-        return $user && ($user->canManageSystem() || $user->isGestor() || $user->isUsuario());
+        // Planejador não tem acesso a demandas
+        return $user && ($user->canManageSystem() || $user->isGestor() || $user->isUsuario() || $user->isAnalista());
     }
 
     public static function canCreate(): bool
     {
         $user = Auth::user();
-        return $user && ($user->canManageSystem() || $user->isGestor() || $user->isUsuario());
+        return $user && ($user->canManageSystem() || $user->isGestor() || $user->isUsuario() || $user->isAnalista());
     }
 
     public static function canEdit($record): bool
     {
         $user = Auth::user();
-        // Gestor não pode editar, apenas Administrador pode
-        return $user && $user->canManageSystem();
+        // Administrador e Analista podem editar
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->canManageSystem()) {
+            return true;
+        }
+
+        // Analista pode editar demandas dos projetos que tem acesso
+        if ($user->isAnalista()) {
+            $projetosIds = $user->projetos()->pluck('projetos.id');
+            return in_array($record->projeto_id, $projetosIds->toArray());
+        }
+
+        // Usuário comum pode editar apenas suas próprias demandas com status "Rascunho"
+        if ($user->isUsuario()) {
+            if ($record->solicitante_id !== $user->id) {
+                return false;
+            }
+            $record->loadMissing('status');
+            return $record->status && $record->status->nome === 'Rascunho';
+        }
+
+        return false;
     }
 
     public static function canDelete($record): bool
     {
         $user = Auth::user();
-        return $user && $user->canManageSystem();
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->canManageSystem()) {
+            return true;
+        }
+
+        // Usuário comum pode excluir apenas suas próprias demandas com status "Rascunho"
+        if ($user->isUsuario()) {
+            if ($record->solicitante_id !== $user->id) {
+                return false;
+            }
+            $record->loadMissing('status');
+            return $record->status && $record->status->nome === 'Rascunho';
+        }
+
+        return false;
     }
 
     public static function form(Form $form): Form
@@ -121,20 +162,25 @@ class DemandaResource extends Resource
                             ->relationship('responsavel', 'nome')
                             ->searchable()
                             ->preload()
-                            ->visible(fn() => $user && !$user->isUsuario()),
+                            ->visible(fn() => $user && (!$user->isUsuario())),
                         Forms\Components\Select::make('status_id')
                             ->label('Status')
-                            ->relationship('status', 'nome')
+                            ->relationship('status', 'nome', fn($query) => $query->orderBy('ordem'))
                             ->required()
                             ->searchable()
                             ->preload()
                             ->options(function () use ($user) {
                                 if (!$user || $user->isUsuario()) {
-                                    return Status::where('nome', 'Solicitada')->pluck('nome', 'id');
+                                    // Usuário comum pode ver apenas Rascunho (na edição sempre será Rascunho)
+                                    return Status::where('nome', 'Rascunho')
+                                        ->orderBy('ordem')
+                                        ->pluck('nome', 'id');
                                 }
-                                return Status::pluck('nome', 'id');
+                                // Analista e outros perfis podem ver todos os status
+                                return Status::orderBy('ordem')->pluck('nome', 'id');
                             })
-                            ->default(fn() => Status::where('nome', 'Solicitada')->first()?->id),
+                            ->default(fn() => Status::where('nome', 'Rascunho')->first()?->id)
+                            ->disabled(fn() => $user && $user->isUsuario()),
                         Forms\Components\Select::make('prioridade')
                             ->label('Prioridade')
                             ->options([
@@ -145,15 +191,12 @@ class DemandaResource extends Resource
                             ->required()
                             ->default('media')
                             ->native(false),
-                    ])
-                    ->columns(2),
-                Forms\Components\Section::make('Observações')
-                    ->schema([
                         Forms\Components\Textarea::make('observacao')
                             ->label('Observação')
                             ->rows(3)
                             ->columnSpanFull(),
-                    ]),
+                    ])
+                    ->columns(2),
             ]);
     }
 
@@ -161,72 +204,86 @@ class DemandaResource extends Resource
     {
         $user = Auth::user();
 
+        $columns = [
+            Tables\Columns\TextColumn::make('numero')
+                ->label('Número')
+                ->searchable()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('data')
+                ->label('Data')
+                ->date('d/m/Y')
+                ->sortable(),
+            Tables\Columns\TextColumn::make('cliente.nome')
+                ->label('Cliente')
+                ->searchable()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('projeto.nome')
+                ->label('Projeto')
+                ->searchable()
+                ->sortable()
+                ->toggleable(),
+            Tables\Columns\TextColumn::make('modulo')
+                ->label('Módulo')
+                ->searchable()
+                ->limit(30),
+            Tables\Columns\TextColumn::make('status.nome')
+                ->label('Status')
+                ->badge()
+                ->color(fn($record) => $record->status->cor ?? 'gray')
+                ->searchable()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('prioridade')
+                ->label('Prioridade')
+                ->badge()
+                ->formatStateUsing(fn($state) => match ($state) {
+                    'baixa' => 'Baixa',
+                    'media' => 'Média',
+                    'alta' => 'Alta',
+                    default => ucfirst($state),
+                })
+                ->color(fn($state) => match ($state) {
+                    'baixa' => 'success', // verde
+                    'media' => 'warning', // amarela
+                    'alta' => 'danger', // vermelha
+                    default => 'gray',
+                })
+                ->searchable()
+                ->sortable(),
+            Tables\Columns\TextColumn::make('descricao')
+                ->label('Descrição')
+                ->limit(50)
+                ->searchable()
+                ->toggleable(),
+        ];
+
+        // Adicionar coluna solicitante apenas se não for usuário comum
+        if (!$user || !$user->isUsuario()) {
+            $columns[] = Tables\Columns\TextColumn::make('solicitante.nome')
+                ->label('Solicitante')
+                ->searchable()
+                ->sortable()
+                ->toggleable();
+        }
+
+        $columns[] = Tables\Columns\TextColumn::make('responsavel.nome')
+            ->label('Responsável')
+            ->searchable()
+            ->sortable()
+            ->toggleable();
+
+        $columns[] = Tables\Columns\TextColumn::make('created_at')
+            ->label('Criado em')
+            ->dateTime('d/m/Y H:i')
+            ->sortable()
+            ->toggleable(isToggledHiddenByDefault: true);
+
         return $table
-            ->columns([
-                Tables\Columns\TextColumn::make('numero')
-                    ->label('Número')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('data')
-                    ->label('Data')
-                    ->date('d/m/Y')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('cliente.nome')
-                    ->label('Cliente')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('projeto.nome')
-                    ->label('Projeto')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('modulo')
-                    ->label('Módulo')
-                    ->searchable()
-                    ->limit(30),
-                Tables\Columns\TextColumn::make('solicitante.nome')
-                    ->label('Solicitante')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('responsavel.nome')
-                    ->label('Responsável')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('status.nome')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn($record) => $record->status->cor ?? 'gray')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('prioridade')
-                    ->label('Prioridade')
-                    ->badge()
-                    ->formatStateUsing(fn($state) => match ($state) {
-                        'baixa' => 'Baixa',
-                        'media' => 'Média',
-                        'alta' => 'Alta',
-                        default => ucfirst($state),
-                    })
-                    ->color(fn($state) => match ($state) {
-                        'baixa' => 'success', // verde
-                        'media' => 'warning', // amarela
-                        'alta' => 'danger', // vermelha
-                        default => 'gray',
-                    })
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Criado em')
-                    ->dateTime('d/m/Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ->recordUrl(fn(Demanda $record): string => static::getUrl('view', ['record' => $record]))
+            ->columns($columns)
             ->filters([
                 Tables\Filters\SelectFilter::make('status_id')
                     ->label('Status')
-                    ->relationship('status', 'nome')
+                    ->relationship('status', 'nome', fn($query) => $query->orderBy('ordem'))
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('prioridade')
@@ -258,11 +315,6 @@ class DemandaResource extends Resource
                             ->select('projetos.id', 'projetos.nome')
                             ->pluck('projetos.nome', 'projetos.id');
                     }),
-            ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
-                    ->visible(fn() => Auth::user()?->canManageSystem() ?? false),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

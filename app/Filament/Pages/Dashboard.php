@@ -8,5 +8,8 @@ class Dashboard extends BaseDashboard
 {
     protected static ?string $navigationLabel = 'Dashboard';
     
-    protected static ?string $title = 'Dashboard';
+    public function getTitle(): string
+    {
+        return '';
+    }
 }

@@ -32,6 +32,7 @@ class DemandaController extends Controller
                 $query->whereIn('projeto_id', $projetosIds);
 
                 // Usuário comum só vê suas próprias demandas (que ele criou)
+                // Analista vê todas as demandas dos projetos que tem acesso
                 if ($user->isUsuario()) {
                     $query->where('solicitante_id', $user->id);
                 }
@@ -156,6 +157,7 @@ class DemandaController extends Controller
             }
 
             // Usuário comum só pode ver suas próprias demandas (que ele criou)
+            // Analista pode ver todas as demandas dos projetos que tem acesso
             if ($user->isUsuario() && $demanda->solicitante_id !== $user->id) {
                 abort(403, 'Você não tem permissão para visualizar esta demanda.');
             }
@@ -177,12 +179,14 @@ class DemandaController extends Controller
             }
 
             // Usuário comum só pode editar suas próprias demandas (que ele criou)
+            // Analista pode editar todas as demandas dos projetos que tem acesso
             if ($user->isUsuario() && $demanda->solicitante_id !== $user->id) {
                 abort(403, 'Você não tem permissão para editar esta demanda.');
             }
         }
 
         // Usuário comum só pode editar demandas com status 'Concluído' para alterar para 'Homologada'
+        // Analista pode editar demandas normalmente
         if ($user->isUsuario()) {
             $statusConcluido = Status::where('nome', 'Concluído')->first();
             if (!$statusConcluido || $demanda->status_id !== $statusConcluido->id) {
@@ -353,6 +357,7 @@ class DemandaController extends Controller
                 $query->whereIn('projeto_id', $projetosIds);
 
                 // Usuário comum só exporta suas próprias demandas (que ele criou)
+                // Analista exporta todas as demandas dos projetos que tem acesso
                 if ($user->isUsuario()) {
                     $query->where('solicitante_id', $user->id);
                 }
@@ -389,6 +394,7 @@ class DemandaController extends Controller
             }
 
             // Usuário comum só pode fazer upload em suas próprias demandas (que ele criou)
+            // Analista pode fazer upload em todas as demandas dos projetos que tem acesso
             if ($user->isUsuario() && $demanda->solicitante_id !== $user->id) {
                 abort(403, 'Você não tem permissão para fazer upload de arquivos nesta demanda.');
             }
@@ -435,6 +441,7 @@ class DemandaController extends Controller
             }
 
             // Usuário comum só pode baixar arquivos de suas próprias demandas (que ele criou)
+            // Analista pode baixar arquivos de todas as demandas dos projetos que tem acesso
             if ($user->isUsuario() && $demanda->solicitante_id !== $user->id) {
                 abort(403, 'Você não tem permissão para baixar este arquivo.');
             }
@@ -457,6 +464,7 @@ class DemandaController extends Controller
             }
 
             // Usuário comum só pode visualizar arquivos de suas próprias demandas (que ele criou)
+            // Analista pode visualizar arquivos de todas as demandas dos projetos que tem acesso
             if ($user->isUsuario() && $demanda->solicitante_id !== $user->id) {
                 abort(403, 'Você não tem permissão para visualizar este arquivo.');
             }

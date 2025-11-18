@@ -13,14 +13,21 @@ use Illuminate\Support\Facades\Auth;
 class StatsOverviewWidget extends BaseWidget
 {
     protected static ?int $sort = 1;
-    
+
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+        // Não mostrar para planejadores
+        return $user && !$user->isPlanejador();
+    }
+
     protected function getStats(): array
     {
         $user = Auth::user();
-        
+
         // Base query para demandas
         $baseQuery = Demanda::query();
-        
+
         if (!$user->isAdmin()) {
             $projetosIds = $user->projetos()->pluck('projetos.id');
             if ($projetosIds->isEmpty()) {
@@ -32,9 +39,12 @@ class StatsOverviewWidget extends BaseWidget
                 }
             }
         }
-        
+
+        // Excluir rascunhos de outros usuários (apenas o criador vê seus rascunhos)
+        $baseQuery->excludeRascunhosFromOthers($user->id);
+
         $totalDemandas = $baseQuery->count();
-        
+
         if ($user->isAdmin()) {
             $totalUsuarios = User::count();
             $totalProjetos = Projeto::where('ativo', true)->count();
@@ -44,37 +54,36 @@ class StatsOverviewWidget extends BaseWidget
             $totalProjetos = $user->projetos()->where('projetos.ativo', true)->count();
             $totalClientes = 0;
         }
-        
+
         $stats = [];
-        
+
         if ($user->isAdmin()) {
             $stats[] = Stat::make('Usuários', $totalUsuarios)
                 ->description('Contas ativas no sistema')
                 ->descriptionIcon('heroicon-o-users')
                 ->color('primary');
         }
-        
-        // Não exibir cards de Projetos e Demandas para Gestor e Usuário
-        if (!$user->isGestor() && !$user->isUsuario()) {
+
+        // Não exibir cards de Projetos e Demandas para Gestor, Usuário, Analista e Planejador
+        if (!$user->isGestor() && !$user->isUsuario() && !$user->isAnalista() && !$user->isPlanejador()) {
             $stats[] = Stat::make('Projetos', $totalProjetos)
                 ->description('Projetos cadastrados')
                 ->descriptionIcon('heroicon-o-folder')
                 ->color('success');
-            
+
             $stats[] = Stat::make('Demandas', $totalDemandas)
                 ->description('Itens no pipeline')
                 ->descriptionIcon('heroicon-o-document-text')
                 ->color('info');
         }
-        
+
         if ($user->isAdmin()) {
             $stats[] = Stat::make('Clientes', $totalClientes)
                 ->description('Organizações atendidas')
                 ->descriptionIcon('heroicon-o-building-office')
                 ->color('warning');
         }
-        
+
         return $stats;
     }
 }
-

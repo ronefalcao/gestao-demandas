@@ -49,7 +49,7 @@ class DemandasRelationManager extends RelationManager
                     ->columnSpanFull(),
                 Forms\Components\Select::make('status_id')
                     ->label('Status')
-                    ->relationship('status', 'nome')
+                    ->relationship('status', 'nome', fn($query) => $query->orderBy('ordem'))
                     ->required()
                     ->searchable()
                     ->preload(),
@@ -102,7 +102,7 @@ class DemandasRelationManager extends RelationManager
             ->filters([
                 Tables\Filters\SelectFilter::make('status_id')
                     ->label('Status')
-                    ->relationship('status', 'nome')
+                    ->relationship('status', 'nome', fn($query) => $query->orderBy('ordem'))
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('projeto_id')
