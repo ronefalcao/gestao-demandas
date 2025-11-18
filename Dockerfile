@@ -12,8 +12,11 @@ RUN apt-get update && apt-get install -y \
     git \
     libpq-dev \
     libzip-dev \
+    libicu-dev \
  && docker-php-ext-configure zip \
- && docker-php-ext-install pdo pdo_pgsql mbstring zip exif pcntl bcmath
+ && docker-php-ext-install pdo pdo_pgsql mbstring zip exif pcntl bcmath intl
+#                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# adiciona a extensão intl
 
 # 🎼 Copia o Composer da imagem oficial
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
