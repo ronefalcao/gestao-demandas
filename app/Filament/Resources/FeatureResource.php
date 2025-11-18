@@ -29,25 +29,25 @@ class FeatureResource extends Resource
     public static function canViewAny(): bool
     {
         $user = Auth::user();
-        return $user && ($user->canManageSystem() || $user->isPlanejador());
+        return $user && ($user->canManageSystem() || $user->isPlanejador() || $user->isGestor());
     }
 
     public static function canCreate(): bool
     {
         $user = Auth::user();
-        return $user && ($user->canManageSystem() || $user->isPlanejador());
+        return $user && ($user->canManageSystem() || $user->isPlanejador() || $user->isGestor());
     }
 
     public static function canEdit($record): bool
     {
         $user = Auth::user();
-        return $user && ($user->canManageSystem() || $user->isPlanejador());
+        return $user && ($user->canManageSystem() || $user->isPlanejador() || $user->isGestor());
     }
 
     public static function canDelete($record): bool
     {
         $user = Auth::user();
-        return $user && ($user->canManageSystem() || $user->isPlanejador());
+        return $user && ($user->canManageSystem() || $user->isPlanejador() || $user->isGestor());
     }
 
     public static function form(Form $form): Form

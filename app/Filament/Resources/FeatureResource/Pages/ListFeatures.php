@@ -12,11 +12,6 @@ class ListFeatures extends ListRecords
 {
     protected static string $resource = FeatureResource::class;
 
-    public function getTitle(): string
-    {
-        return '';
-    }
-
     protected function getHeaderActions(): array
     {
         return [

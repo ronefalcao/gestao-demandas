@@ -12,11 +12,6 @@ class ListProjetos extends ListRecords
 {
     protected static string $resource = ProjetoResource::class;
 
-    public function getTitle(): string
-    {
-        return '';
-    }
-
     protected function getHeaderActions(): array
     {
         return [
