@@ -10,20 +10,27 @@ use Illuminate\Support\Facades\Auth;
 class DemandasPorStatusCustomWidget extends Widget
 {
     protected static string $view = 'filament.widgets.demandas-por-status-custom-widget';
-    
+
     protected int | string | array $columnSpan = 'full';
-    
-    protected static ?int $sort = 2;
-    
+
+    protected static ?int $sort = 1;
+
+    public static function canView(): bool
+    {
+        $user = Auth::user();
+        // Não mostrar para planejadores
+        return $user && !$user->isPlanejador();
+    }
+
     public array $totais = [];
-    
+
     public function mount(): void
     {
         $user = Auth::user();
-        
+
         // Base query para demandas
         $baseQuery = Demanda::query();
-        
+
         if (!$user->isAdmin()) {
             $projetosIds = $user->projetos()->pluck('projetos.id');
             if ($projetosIds->isEmpty()) {
@@ -35,10 +42,14 @@ class DemandasPorStatusCustomWidget extends Widget
                 }
             }
         }
-        
-        $statuses = Status::orderBy('ordem')
+
+        // Excluir rascunhos de outros usuários (apenas o criador vê seus rascunhos)
+        $baseQuery->excludeRascunhosFromOthers($user->id);
+
+        $statuses = Status::where('nome', '!=', 'Cancelada')
+            ->orderBy('ordem')
             ->get();
-        
+
         foreach ($statuses as $status) {
             $countQuery = clone $baseQuery;
             $this->totais[] = [
@@ -50,4 +61,3 @@ class DemandasPorStatusCustomWidget extends Widget
         }
     }
 }
-

@@ -12,6 +12,11 @@ class ListDemandas extends ListRecords
 {
     protected static string $resource = DemandaResource::class;
 
+    public function getTitle(): string
+    {
+        return '';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -34,11 +39,16 @@ class ListDemandas extends ListRecords
                 $query->whereIn('projeto_id', $projetosIds);
 
                 // Usuário comum só vê suas próprias demandas (que ele criou)
+                // Analista vê todas as demandas dos projetos que tem acesso
                 if ($user->isUsuario()) {
                     $query->where('solicitante_id', $user->id);
                 }
+                // Gestor e Analista veem todas as demandas dos projetos com acesso (sem filtro adicional)
             }
         }
+
+        // Excluir rascunhos de outros usuários (apenas o criador vê seus rascunhos)
+        $query->excludeRascunhosFromOthers($user->id);
 
         return $query;
     }

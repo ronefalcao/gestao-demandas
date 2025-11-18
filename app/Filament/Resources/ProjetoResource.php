@@ -25,7 +25,7 @@ class ProjetoResource extends Resource
     public static function canViewAny(): bool
     {
         $user = Auth::user();
-        return $user && ($user->canManageSystem() || $user->isGestor());
+        return $user && ($user->canManageSystem() || $user->isGestor() || $user->isPlanejador());
     }
 
     public static function canCreate(): bool

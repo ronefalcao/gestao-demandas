@@ -30,11 +30,15 @@ class DashboardController extends Controller
                 $baseQuery->whereIn('projeto_id', $projetosIds);
 
                 // Usuário comum só vê suas próprias demandas (que ele criou)
+                // Analista vê todas as demandas dos projetos que tem acesso
                 if ($user->isUsuario()) {
                     $baseQuery->where('solicitante_id', $user->id);
                 }
             }
         }
+
+        // Excluir rascunhos de outros usuários (apenas o criador vê seus rascunhos)
+        $baseQuery->excludeRascunhosFromOthers($user->id);
 
         $statuses = Status::where('nome', '!=', 'Cancelada')->get();
         $totais = [];

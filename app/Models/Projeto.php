@@ -34,4 +34,12 @@ class Projeto extends Model
     {
         return $this->belongsToMany(User::class, 'projeto_user');
     }
+
+    /**
+     * Relacionamento com features
+     */
+    public function features()
+    {
+        return $this->hasMany(Feature::class);
+    }
 }
