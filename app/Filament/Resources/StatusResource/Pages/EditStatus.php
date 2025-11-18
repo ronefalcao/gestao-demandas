@@ -10,6 +10,11 @@ class EditStatus extends EditRecord
 {
     protected static string $resource = StatusResource::class;
 
+    public function getTitle(): string
+    {
+        return '';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

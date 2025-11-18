@@ -10,6 +10,11 @@ class EditCliente extends EditRecord
 {
     protected static string $resource = ClienteResource::class;
 
+    public function getTitle(): string
+    {
+        return '';
+    }
+
     protected function getHeaderActions(): array
     {
         return [

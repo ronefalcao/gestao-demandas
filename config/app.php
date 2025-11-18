@@ -2,7 +2,7 @@
 
 return [
 
-    'name' => env('APP_NAME', 'Sistema de Demandas'),
+    'name' => env('APP_NAME', 'G&T Demandas'),
     'env' => env('APP_ENV', 'production'),
     'debug' => (bool) env('APP_DEBUG', false),
     'url' => env('APP_URL', 'http://localhost'),

@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     {
 
         // Status
+        Status::create(['nome' => 'Rascunho',         'cor' => '#6c757d', 'ordem' => 0]); // Cinza → rascunho, pode editar/excluir
         Status::create(['nome' => 'Solicitada',       'cor' => '#f0ad4e', 'ordem' => 1]); // Laranja suave → pendente
         Status::create(['nome' => 'Em Análise',       'cor' => '#17a2b8', 'ordem' => 2]); // Azul claro → análise técnica
         Status::create(['nome' => 'Backlog',          'cor' => '#6c757d', 'ordem' => 3]); // Cinza → aguardando prioridade

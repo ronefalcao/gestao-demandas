@@ -82,4 +82,25 @@ class Demanda extends Model
     {
         return $this->hasMany(DemandaArquivo::class);
     }
+
+    /**
+     * Escopo para excluir demandas com status "Rascunho" de outros usuários
+     * Apenas o criador da demanda pode ver seus rascunhos
+     */
+    public function scopeExcludeRascunhosFromOthers($query, $userId = null)
+    {
+        if ($userId === null) {
+            $userId = auth()->id();
+        }
+
+        if ($userId) {
+            return $query->where(function ($q) use ($userId) {
+                $q->whereHas('status', function ($statusQuery) {
+                    $statusQuery->where('nome', '!=', 'Rascunho');
+                })->orWhere('solicitante_id', $userId);
+            });
+        }
+
+        return $query;
+    }
 }

@@ -70,11 +70,27 @@ class User extends Authenticatable implements FilamentUser, HasName
     }
 
     /**
+     * Verifica se o usuário é analista
+     */
+    public function isAnalista(): bool
+    {
+        return strtolower((string) $this->tipo) === 'analista';
+    }
+
+    /**
+     * Verifica se o usuário é planejador
+     */
+    public function isPlanejador(): bool
+    {
+        return strtolower((string) $this->tipo) === 'planejador';
+    }
+
+    /**
      * Verifica se o usuário pode visualizar todas as demandas
      */
     public function canViewAllDemandas(): bool
     {
-        return $this->isAdmin() || $this->isGestor();
+        return $this->isAdmin() || $this->isGestor() || $this->isAnalista();
     }
 
     /**
@@ -95,8 +111,8 @@ class User extends Authenticatable implements FilamentUser, HasName
 
     public function canAccessPanel(Panel $panel): bool
     {
-        // Permite acesso para administradores, gestores e usuários comuns
-        return $this->canManageSystem() || $this->isGestor() || $this->isUsuario();
+        // Permite acesso para administradores, gestores, usuários comuns, analistas e planejadores
+        return $this->canManageSystem() || $this->isGestor() || $this->isUsuario() || $this->isAnalista() || $this->isPlanejador();
     }
 
     public function getFilamentName(): string

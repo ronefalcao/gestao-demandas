@@ -42,10 +42,29 @@ class ArquivosRelationManager extends RelationManager
     {
         /** @var User $user */
         $user = Auth::user();
-        $demanda = $this->getOwnerRecord()->load('status');
+        $demanda = $this->getOwnerRecord();
+        
+        // Garantir que o status está carregado
+        if (!$demanda->relationLoaded('status')) {
+            $demanda->load('status');
+        }
+        
         $statusBloqueados = ['Concluído', 'Homologada', 'Publicada', 'Cancelada'];
-        $podeAnexarArquivo = !in_array($demanda->status->nome, $statusBloqueados);
-        $podeDeletarArquivo = !$user->isUsuario() && $demanda->status->nome === 'Solicitada';
+        
+        // Permitir anexar arquivos se:
+        // 1. Status for "Rascunho" (qualquer usuário pode anexar)
+        // 2. OU se não estiver na lista de bloqueados E não for usuário comum
+        $podeAnexarArquivo = $demanda->status && (
+            $demanda->status->nome === 'Rascunho' 
+            || (!in_array($demanda->status->nome, $statusBloqueados) && !$user->isUsuario())
+        );
+        
+        // Analista pode deletar arquivos se o status for "Solicitada" (assim como admin e gestor)
+        // Usuário comum pode deletar arquivos se o status for "Rascunho"
+        $podeDeletarArquivo = $demanda->status && (
+            (!$user->isUsuario() && $demanda->status->nome === 'Solicitada')
+            || ($user->isUsuario() && $demanda->status->nome === 'Rascunho')
+        );
 
         return $table
             ->recordTitleAttribute('nome_original')
@@ -83,7 +102,26 @@ class ArquivosRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('Enviar Arquivo')
-                    ->visible($podeAnexarArquivo)
+                    ->visible(function () use ($user) {
+                        $demanda = $this->getOwnerRecord();
+                        
+                        // Garantir que o status está carregado
+                        if (!$demanda->relationLoaded('status')) {
+                            $demanda->load('status');
+                        }
+                        
+                        if (!$demanda->status) {
+                            return false;
+                        }
+                        
+                        $statusBloqueados = ['Concluído', 'Homologada', 'Publicada', 'Cancelada'];
+                        
+                        // Permitir anexar arquivos se:
+                        // 1. Status for "Rascunho" (qualquer usuário pode anexar)
+                        // 2. OU se não estiver na lista de bloqueados E não for usuário comum
+                        return $demanda->status->nome === 'Rascunho' 
+                            || (!in_array($demanda->status->nome, $statusBloqueados) && !$user->isUsuario());
+                    })
                     ->mutateFormDataUsing(function (array $data): array {
                         $caminho = $data['arquivo_temp'] ?? null;
                         if (!$caminho) {
@@ -143,7 +181,23 @@ class ArquivosRelationManager extends RelationManager
                             }),
                     ]),
                 Tables\Actions\DeleteAction::make()
-                    ->visible($podeDeletarArquivo)
+                    ->visible(function () use ($user) {
+                        $demanda = $this->getOwnerRecord();
+                        
+                        // Garantir que o status está carregado
+                        if (!$demanda->relationLoaded('status')) {
+                            $demanda->load('status');
+                        }
+                        
+                        if (!$demanda->status) {
+                            return false;
+                        }
+                        
+                        // Analista pode deletar arquivos se o status for "Solicitada" (assim como admin e gestor)
+                        // Usuário comum pode deletar arquivos se o status for "Rascunho"
+                        return (!$user->isUsuario() && $demanda->status->nome === 'Solicitada')
+                            || ($user->isUsuario() && $demanda->status->nome === 'Rascunho');
+                    })
                     ->successNotificationTitle('Arquivo excluído com sucesso!')
                     ->before(function (DemandaArquivo $record) {
                         Storage::disk('public')->delete($record->caminho);
@@ -152,7 +206,23 @@ class ArquivosRelationManager extends RelationManager
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->visible($podeDeletarArquivo)
+                        ->visible(function () use ($user) {
+                            $demanda = $this->getOwnerRecord();
+                            
+                            // Garantir que o status está carregado
+                            if (!$demanda->relationLoaded('status')) {
+                                $demanda->load('status');
+                            }
+                            
+                            if (!$demanda->status) {
+                                return false;
+                            }
+                            
+                            // Analista pode deletar arquivos se o status for "Solicitada" (assim como admin e gestor)
+                            // Usuário comum pode deletar arquivos se o status for "Rascunho"
+                            return (!$user->isUsuario() && $demanda->status->nome === 'Solicitada')
+                                || ($user->isUsuario() && $demanda->status->nome === 'Rascunho');
+                        })
                         ->before(function ($records) {
                             foreach ($records as $record) {
                                 Storage::disk('public')->delete($record->caminho);
@@ -178,6 +248,7 @@ class ArquivosRelationManager extends RelationManager
             }
 
             // Usuário comum só pode ver arquivos de suas próprias demandas
+            // Analista pode ver arquivos de todas as demandas dos projetos que tem acesso
             if ($user->isUsuario() && $ownerRecord->solicitante_id !== $user->id) {
                 return false;
             }

@@ -10,6 +10,11 @@ class EditDemanda extends EditRecord
 {
     protected static string $resource = DemandaResource::class;
 
+    public function getTitle(): string
+    {
+        return '';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
