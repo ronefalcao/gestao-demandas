@@ -48,33 +48,42 @@ class PlanejamentoGanttWidget extends Widget
         $estrutura = [];
 
         foreach ($projetos as $projeto) {
+            // Buscar todas as features do projeto com status e módulo
+            $todasFeatures = $projeto->features()->with(['status', 'modulo'])->orderBy('numero')->get();
+
             // Buscar itens do projeto através das features
             $itens = Item::query()
                 ->join('features', 'itens.feature_id', '=', 'features.id')
                 ->where('features.projeto_id', $projeto->id)
-                ->with(['feature', 'sprint'])
+                ->with(['feature.status', 'feature.modulo', 'sprint'])
                 ->select('itens.*')
                 ->orderBy('features.numero')
                 ->orderBy('itens.numero')
                 ->get();
 
             // Agrupar itens por feature
-            $features = [];
+            $itensPorFeature = [];
             foreach ($itens as $item) {
                 $featureId = $item->feature_id;
-                if (!isset($features[$featureId])) {
-                    $features[$featureId] = [
-                        'feature' => $item->feature,
-                        'itens' => [],
-                    ];
+                if (!isset($itensPorFeature[$featureId])) {
+                    $itensPorFeature[$featureId] = [];
                 }
-                $features[$featureId]['itens'][] = $item;
+                $itensPorFeature[$featureId][] = $item;
             }
 
-            if (!empty($features) || $projeto->features()->exists()) {
+            // Montar estrutura com todas as features
+            $features = [];
+            foreach ($todasFeatures as $feature) {
+                $features[] = [
+                    'feature' => $feature,
+                    'itens' => $itensPorFeature[$feature->id] ?? [],
+                ];
+            }
+
+            if (!empty($features)) {
                 $estrutura[] = [
                     'projeto' => $projeto,
-                    'features' => array_values($features),
+                    'features' => $features,
                 ];
             }
         }

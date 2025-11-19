@@ -26,7 +26,7 @@ class DemandaResource extends Resource
 
     protected static ?string $navigationLabel = 'Demandas';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 7;
 
     public static function canViewAny(): bool
     {

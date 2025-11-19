@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\FeatureResource\Pages;
 use App\Filament\Resources\FeatureResource\RelationManagers;
 use App\Models\Feature;
+use App\Models\Modulo;
 use App\Models\Projeto;
 use App\Models\Status;
 use Filament\Forms;
@@ -24,7 +25,7 @@ class FeatureResource extends Resource
 
     protected static ?string $navigationLabel = 'Features';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 9;
 
     public static function canViewAny(): bool
     {
@@ -66,6 +67,7 @@ class FeatureResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload()
+                            ->live()
                             ->options(function () {
                                 $user = Auth::user();
                                 if (!$user) {
@@ -80,10 +82,51 @@ class FeatureResource extends Resource
                                     ->select('projetos.id', 'projetos.nome')
                                     ->pluck('projetos.nome', 'projetos.id');
                             }),
-                        Forms\Components\TextInput::make('modulo')
+                        Forms\Components\Select::make('modulo_id')
                             ->label('Módulo')
+                            ->relationship('modulo', 'nome')
                             ->required()
-                            ->maxLength(255),
+                            ->searchable()
+                            ->preload()
+                            ->options(function (Forms\Get $get) {
+                                $projetoId = $get('projeto_id');
+                                if (!$projetoId) {
+                                    return [];
+                                }
+                                return Modulo::where('projeto_id', $projetoId)
+                                    ->orderBy('nome')
+                                    ->pluck('nome', 'id');
+                            })
+                            ->createOptionForm([
+                                Forms\Components\Select::make('projeto_id')
+                                    ->label('Projeto')
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->options(function () {
+                                        $user = Auth::user();
+                                        if (!$user) {
+                                            return [];
+                                        }
+                                        if ($user->isAdmin()) {
+                                            return Projeto::where('ativo', true)->pluck('nome', 'id');
+                                        }
+                                        return $user->projetos()
+                                            ->where('projetos.ativo', true)
+                                            ->select('projetos.id', 'projetos.nome')
+                                            ->pluck('projetos.nome', 'projetos.id');
+                                    }),
+                                Forms\Components\TextInput::make('nome')
+                                    ->label('Nome')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\Textarea::make('descricao')
+                                    ->label('Descrição')
+                                    ->rows(3),
+                            ])
+                            ->createOptionUsing(function (array $data): int {
+                                return Modulo::create($data)->id;
+                            }),
                         Forms\Components\TextInput::make('titulo')
                             ->label('Título')
                             ->required()
@@ -131,8 +174,9 @@ class FeatureResource extends Resource
                     ->label('Projeto')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('modulo')
+                Tables\Columns\TextColumn::make('modulo.nome')
                     ->label('Módulo')
+                    ->formatStateUsing(fn($record) => $record->modulo ? (is_object($record->modulo) ? $record->modulo->nome : $record->modulo) : '-')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('titulo')
@@ -178,6 +222,10 @@ class FeatureResource extends Resource
                     ->preload(),
             ])
             ->recordUrl(fn(Feature $record): string => static::getUrl('view', ['record' => $record]))
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

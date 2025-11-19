@@ -41,7 +41,8 @@ class ViewFeature extends ViewRecord
                                         Infolists\Components\TextEntry::make('projeto.nome')
                                             ->label('Projeto'),
                                         Infolists\Components\TextEntry::make('modulo')
-                                            ->label('Módulo'),
+                                            ->label('Módulo')
+                                            ->formatStateUsing(fn ($record) => $record->modulo ? (is_object($record->modulo) ? $record->modulo->nome : $record->modulo) : '-'),
                                         Infolists\Components\TextEntry::make('titulo')
                                             ->label('Título'),
                                         Infolists\Components\TextEntry::make('descricao')

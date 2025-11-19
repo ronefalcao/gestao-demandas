@@ -42,4 +42,12 @@ class Projeto extends Model
     {
         return $this->hasMany(Feature::class);
     }
+
+    /**
+     * Relacionamento com módulos
+     */
+    public function modulos()
+    {
+        return $this->hasMany(Modulo::class);
+    }
 }

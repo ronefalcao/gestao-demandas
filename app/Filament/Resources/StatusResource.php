@@ -22,7 +22,7 @@ class StatusResource extends Resource
 
     protected static ?string $navigationLabel = 'Status';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 6;
 
     public static function canViewAny(): bool
     {

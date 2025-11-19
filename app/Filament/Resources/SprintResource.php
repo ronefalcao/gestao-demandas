@@ -22,7 +22,7 @@ class SprintResource extends Resource
 
     protected static ?string $navigationLabel = 'Sprints';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 8;
 
     public static function canViewAny(): bool
     {

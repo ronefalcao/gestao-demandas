@@ -12,7 +12,8 @@ class Feature extends Model
     protected $fillable = [
         'numero',
         'projeto_id',
-        'modulo',
+        'modulo_id',
+        'modulo', // Mantido temporariamente para compatibilidade durante migração
         'titulo',
         'descricao',
         'status_id',
@@ -24,6 +25,26 @@ class Feature extends Model
     public function projeto()
     {
         return $this->belongsTo(Projeto::class);
+    }
+
+    /**
+     * Relacionamento com módulo
+     */
+    public function modulo()
+    {
+        return $this->belongsTo(Modulo::class);
+    }
+
+    /**
+     * Accessor para obter o nome do módulo (compatibilidade com campo antigo)
+     */
+    public function getModuloNomeAttribute()
+    {
+        if ($this->modulo_id && $this->relationLoaded('modulo') && $this->modulo) {
+            return $this->modulo->nome;
+        }
+        // Fallback para o campo antigo (string)
+        return $this->attributes['modulo'] ?? null;
     }
 
     /**

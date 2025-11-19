@@ -21,7 +21,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse  text-sm">
                     <thead>
-                        <tr class="bg-slate-200 border-b-2 border-slate-400 sticky top-0 z-10">
+                        <tr class="bg-slate-200 border-b-2 border-slate-400 sticky top-0 z-40">
                             <th
                                 class="px-3 py-2 text-left font-bold text-slate-800 border-r border-slate-400 min-w-[200px]">
                                 Item
@@ -79,17 +79,73 @@
                                 @endphp
 
                                 {{-- Linha da Feature ocupando toda a largura --}}
-                                <tr class="bg-indigo-100 border-b border-indigo-300">
-                                    <td class="px-4 py-2 font-semibold text-indigo-900" colspan="{{ $totalColunas }}">
+                                @php
+                                    $statusCor = $feature->status->cor ?? 'gray';
+                                    $bgClasses = match ($statusCor) {
+                                        'danger' => 'bg-red-100 border-red-300',
+                                        'warning' => 'bg-yellow-100 border-yellow-300',
+                                        'success' => 'bg-green-100 border-green-300',
+                                        'info' => 'bg-blue-100 border-blue-300',
+                                        'primary' => 'bg-indigo-100 border-indigo-300',
+                                        'secondary' => 'bg-gray-100 border-gray-300',
+                                        default => 'bg-gray-100 border-gray-300',
+                                    };
+                                    $textClasses = match ($statusCor) {
+                                        'danger' => 'text-red-900',
+                                        'warning' => 'text-yellow-900',
+                                        'success' => 'text-green-900',
+                                        'info' => 'text-blue-900',
+                                        'primary' => 'text-indigo-900',
+                                        'secondary' => 'text-gray-900',
+                                        default => 'text-gray-900',
+                                    };
+                                    $badgeClasses = match ($statusCor) {
+                                        'danger' => 'text-red-700 bg-red-200',
+                                        'warning' => 'text-yellow-700 bg-yellow-200',
+                                        'success' => 'text-green-700 bg-green-200',
+                                        'info' => 'text-blue-700 bg-blue-200',
+                                        'primary' => 'text-indigo-700 bg-indigo-200',
+                                        'secondary' => 'text-gray-700 bg-gray-200',
+                                        default => 'text-gray-700 bg-gray-200',
+                                    };
+                                @endphp
+                                <tr class="{{ $bgClasses }} border-b">
+                                    <td class="px-4 py-2 font-semibold {{ $textClasses }}"
+                                        colspan="{{ $totalColunas }}">
                                         <div class="flex items-center gap-2">
                                             @if ($feature->numero)
                                                 <span
-                                                    class="text-sm font-bold text-indigo-700">{{ $feature->numero }}</span>
+                                                    class="text-sm font-bold {{ $textClasses }}">{{ $feature->numero }}</span>
                                             @endif
-                                            <span class="font-medium text-indigo-900">{{ $feature->titulo }}</span>
-                                            @if ($feature->modulo)
+                                            <span
+                                                class="font-medium {{ $textClasses }}">{{ $feature->titulo }}</span>
+                                            @php
+                                                $moduloNome = null;
+                                                try {
+                                                    // Tentar obter o nome do módulo via relacionamento
+                                                    if ($feature->modulo_id) {
+                                                        $modulo = $feature->modulo;
+                                                        if ($modulo && is_object($modulo)) {
+                                                            $moduloNome = $modulo->nome;
+                                                        }
+                                                    }
+                                                    // Fallback: se não conseguiu pelo relacionamento, tentar o atributo direto
+                                                    if (!$moduloNome && isset($feature->getAttributes()['modulo'])) {
+                                                        $moduloAttr = $feature->getAttributes()['modulo'];
+                                                        if (!empty($moduloAttr) && is_string($moduloAttr)) {
+                                                            $moduloNome = $moduloAttr;
+                                                        }
+                                                    }
+                                                } catch (\Exception $e) {
+                                                    // Ignorar erros e não exibir módulo
+                                                    $moduloNome = null;
+                                                }
+                                            @endphp
+                                            @if ($moduloNome)
                                                 <span
-                                                    class="text-xs text-indigo-700 bg-indigo-200 px-2 py-0.5 rounded font-semibold">{{ $feature->modulo }}</span>
+                                                    class="text-xs {{ $badgeClasses }} px-2 py-0.5 rounded font-semibold">
+                                                    {{ $moduloNome }}
+                                                </span>
                                             @endif
                                         </div>
                                     </td>
