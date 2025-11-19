@@ -44,7 +44,7 @@ class PlanejamentoGanttWidget extends Widget
                 ->get();
         }
 
-        // Estruturar dados hierarquicamente: Projeto > Feature > Item
+        // Estruturar dados hierarquicamente: Projeto > Módulo > Feature > Item
         $estrutura = [];
 
         foreach ($projetos as $projeto) {
@@ -71,19 +71,60 @@ class PlanejamentoGanttWidget extends Widget
                 $itensPorFeature[$featureId][] = $item;
             }
 
-            // Montar estrutura com todas as features
-            $features = [];
+            // Agrupar features por módulo
+            $modulos = [];
             foreach ($todasFeatures as $feature) {
-                $features[] = [
+                $moduloId = $feature->modulo_id;
+                $moduloNome = null;
+                $moduloObjeto = null;
+                
+                // Obter nome do módulo
+                try {
+                    if ($feature->modulo_id && $feature->relationLoaded('modulo') && $feature->modulo) {
+                        $moduloObjeto = $feature->modulo;
+                        if (is_object($moduloObjeto)) {
+                            $moduloNome = $moduloObjeto->nome;
+                        }
+                    }
+                    
+                    // Fallback: tentar obter do atributo direto (campo antigo)
+                    if (!$moduloNome && isset($feature->getAttributes()['modulo'])) {
+                        $moduloAttr = $feature->getAttributes()['modulo'];
+                        if (!empty($moduloAttr)) {
+                            if (is_string($moduloAttr)) {
+                                $moduloNome = $moduloAttr;
+                            } elseif (is_object($moduloAttr) && isset($moduloAttr->nome)) {
+                                $moduloNome = $moduloAttr->nome;
+                                $moduloObjeto = $moduloAttr;
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Ignorar erros
+                    $moduloNome = null;
+                }
+                
+                // Usar módulo_id como chave, ou 'sem-modulo' se não tiver
+                $chaveModulo = $moduloId ? $moduloId : 'sem-modulo-' . ($moduloNome ?? 'sem-nome');
+                
+                if (!isset($modulos[$chaveModulo])) {
+                    $modulos[$chaveModulo] = [
+                        'modulo' => $moduloObjeto,
+                        'moduloNome' => $moduloNome ?? 'Sem Módulo',
+                        'features' => [],
+                    ];
+                }
+                
+                $modulos[$chaveModulo]['features'][] = [
                     'feature' => $feature,
                     'itens' => $itensPorFeature[$feature->id] ?? [],
                 ];
             }
 
-            if (!empty($features)) {
+            if (!empty($modulos)) {
                 $estrutura[] = [
                     'projeto' => $projeto,
-                    'features' => $features,
+                    'modulos' => array_values($modulos),
                 ];
             }
         }
