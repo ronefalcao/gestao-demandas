@@ -14,17 +14,19 @@ class ViewDemanda extends ViewRecord
 
     public function getTitle(): string
     {
-        return '';
+        return 'Detalhes da Demanda';
     }
 
     protected function getHeaderActions(): array
     {
         $user = Auth::user();
-        $demanda = $this->record->load('status');
-        
+        $demanda = $this->record->loadMissing(['status', 'projeto']);
+
         $actions = [
             Actions\EditAction::make()
-                ->authorize(fn() => DemandaResource::canEdit($this->record)),
+                ->authorize(function () use ($demanda) {
+                    return DemandaResource::canEdit($demanda);
+                }),
         ];
 
         // Adicionar botões para usuários comuns
@@ -44,17 +46,17 @@ class ViewDemanda extends ViewRecord
                         $statusSolicitada = Status::where('nome', 'Solicitada')->first();
                         if ($statusSolicitada) {
                             $demanda->update(['status_id' => $statusSolicitada->id]);
-                            
+
                             \Filament\Notifications\Notification::make()
                                 ->title('Demanda solicitada com sucesso!')
                                 ->success()
                                 ->send();
-                            
+
                             $this->redirect(static::getResource()::getUrl('view', ['record' => $demanda]));
                         }
                     });
             }
-            
+
             // Botão "Cancelar Solicitação" quando a demanda estiver em "Solicitada"
             if ($demanda->status && $demanda->status->nome === 'Solicitada') {
                 $actions[] = Actions\Action::make('cancelarSolicitacao')
@@ -70,12 +72,12 @@ class ViewDemanda extends ViewRecord
                         $statusRascunho = Status::where('nome', 'Rascunho')->first();
                         if ($statusRascunho) {
                             $demanda->update(['status_id' => $statusRascunho->id]);
-                            
+
                             \Filament\Notifications\Notification::make()
                                 ->title('Solicitação cancelada com sucesso!')
                                 ->success()
                                 ->send();
-                            
+
                             $this->redirect(static::getResource()::getUrl('view', ['record' => $demanda]));
                         }
                     });

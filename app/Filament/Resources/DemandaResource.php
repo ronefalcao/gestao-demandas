@@ -49,6 +49,32 @@ class DemandaResource extends Resource
             return false;
         }
 
+        // Garantir que o record tenha os relacionamentos necessários carregados
+        if ($record instanceof \Illuminate\Database\Eloquent\Model) {
+            $record->loadMissing(['status', 'projeto']);
+        }
+
+        // Verificar se o status é "Solicitada" ou posterior (ordem >= 1)
+        $statusOrdem = $record->status ? $record->status->ordem : 0;
+        $isSolicitadaOuPosterior = $statusOrdem >= 1;
+
+        // Se o status for "Solicitada" ou posterior, apenas administrador e analista podem editar
+        if ($isSolicitadaOuPosterior) {
+            if ($user->canManageSystem()) {
+                return true;
+            }
+
+            // Analista pode editar demandas dos projetos que tem acesso
+            if ($user->isAnalista()) {
+                $projetosIds = $user->projetos()->pluck('projetos.id');
+                return in_array($record->projeto_id, $projetosIds->toArray());
+            }
+
+            // Usuário comum não pode editar demandas com status "Solicitada" ou posterior
+            return false;
+        }
+
+        // Para status "Rascunho" (ordem = 0), manter a lógica original
         if ($user->canManageSystem()) {
             return true;
         }
@@ -64,7 +90,6 @@ class DemandaResource extends Resource
             if ($record->solicitante_id !== $user->id) {
                 return false;
             }
-            $record->loadMissing('status');
             return $record->status && $record->status->nome === 'Rascunho';
         }
 
