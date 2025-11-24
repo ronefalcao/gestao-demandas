@@ -23,7 +23,8 @@ class ViewDemanda extends ViewRecord
         $demanda = $this->record->load('status');
         
         $actions = [
-            Actions\EditAction::make(),
+            Actions\EditAction::make()
+                ->authorize(fn() => DemandaResource::canEdit($this->record)),
         ];
 
         // Adicionar botões para usuários comuns

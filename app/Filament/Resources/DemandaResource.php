@@ -316,6 +316,11 @@ class DemandaResource extends Resource
                             ->pluck('projetos.nome', 'projetos.id');
                     }),
             ])
+            ->actions([
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->authorize(fn(Demanda $record) => static::canEdit($record)),
+            ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
