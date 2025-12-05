@@ -21,6 +21,10 @@ yarn-error.log
 /.idea
 /.vscode
 
+# Laravel cache files
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
 
 
 
