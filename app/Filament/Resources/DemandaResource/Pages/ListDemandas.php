@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 class ListDemandas extends ListRecords
 {
     protected static string $resource = DemandaResource::class;
+    
+    protected static string $view = 'filament-panels::resources.pages.list-demandas';
 
     protected function getHeaderActions(): array
     {
