@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Services\S3Service;
 use App\Models\Demanda;
 use App\Models\DemandaArquivo;
 use App\Models\Cliente;
@@ -412,20 +413,36 @@ class DemandaController extends Controller
         ]);
 
         $arquivo = $request->file('arquivo');
-        $nomeOriginal = $arquivo->getClientOriginalName();
-        $nomeArquivo = uniqid() . '_' . time() . '.' . $arquivo->getClientOriginalExtension();
-        $caminho = $arquivo->storeAs('demandas', $nomeArquivo, 'public');
 
-        DemandaArquivo::create([
-            'demanda_id' => $demanda->id,
-            'nome_original' => $nomeOriginal,
-            'nome_arquivo' => $nomeArquivo,
-            'caminho' => $caminho,
-            'tipo' => $arquivo->getClientOriginalExtension(),
-            'tamanho' => $arquivo->getSize(),
-        ]);
+        try {
+            // Usar S3Service para fazer upload
+            $s3Service = new S3Service();
+            $pasta = $demanda->id . '/arquivos';
+            $resultado = $s3Service->uploadFormData($arquivo, $pasta);
 
-        return redirect()->route('demandas.show', $demanda)->with('success', 'Arquivo enviado com sucesso!');
+            // Validar que o resultado contém todos os campos obrigatórios
+            $requiredFields = ['nome_original', 'nome', 'caminho', 'extensao', 'tamanho'];
+            foreach ($requiredFields as $field) {
+                if (!isset($resultado[$field])) {
+                    throw new \Exception("Campo obrigatório '{$field}' não foi retornado pelo serviço de upload.");
+                }
+            }
+
+            DemandaArquivo::create([
+                'demanda_id' => $demanda->id,
+                'nome_original' => $resultado['nome_original'],
+                'nome_arquivo' => $resultado['nome'],
+                'caminho' => $resultado['caminho'],
+                'tipo' => $resultado['extensao'],
+                'tamanho' => $resultado['tamanho'],
+            ]);
+
+            return redirect()->route('demandas.show', $demanda)->with('success', 'Arquivo enviado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Erro ao enviar arquivo: ' . $e->getMessage());
+        }
     }
 
     public function downloadArquivo(DemandaArquivo $arquivo)
@@ -447,6 +464,12 @@ class DemandaController extends Controller
             }
         }
 
+        // Se for S3, redireciona para URL temporária
+        if ($arquivo->isS3()) {
+            return redirect($arquivo->getDownloadUrl(5));
+        }
+
+        // Arquivo local - fazer download direto
         $path = Storage::disk('public')->path($arquivo->caminho);
         return Response::download($path, $arquivo->nome_original);
     }
@@ -470,12 +493,19 @@ class DemandaController extends Controller
             }
         }
 
-        if (!Storage::disk('public')->exists($arquivo->caminho)) {
+        // Verificar se o arquivo existe
+        if (!$arquivo->exists()) {
             abort(404, 'Arquivo não encontrado.');
         }
 
-        $file = Storage::disk('public')->get($arquivo->caminho);
-        $mimeType = Storage::disk('public')->mimeType($arquivo->caminho);
+        // Se for S3, redireciona para URL temporária
+        if ($arquivo->isS3()) {
+            return redirect($arquivo->getViewUrl(60));
+        }
+
+        // Arquivo local - servir arquivo diretamente
+        $file = $arquivo->getContent();
+        $mimeType = $arquivo->getMimeType();
 
         return Response::make($file, 200, [
             'Content-Type' => $mimeType,
@@ -507,7 +537,8 @@ class DemandaController extends Controller
             return redirect()->back()->with('error', 'Não é possível excluir arquivos de demandas com status "' . $demanda->status->nome . '". Apenas demandas com status "Solicitada" permitem exclusão de arquivos.');
         }
 
-        Storage::disk('public')->delete($arquivo->caminho);
+        // Deletar arquivo (S3 ou local)
+        $arquivo->deleteFile();
         $arquivo->delete();
 
         return redirect()->route('demandas.show', $demanda)->with('success', 'Arquivo excluído com sucesso!');

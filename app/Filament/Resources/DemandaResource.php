@@ -342,9 +342,292 @@ class DemandaResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
-                    ->authorize(fn(Demanda $record) => static::canEdit($record)),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make()
+                        ->authorize(fn(Demanda $record) => static::canEdit($record)),
+                // Ação para usuários comuns: Solicitar
+                Tables\Actions\Action::make('solicitar')
+                    ->label('Solicitar')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Solicitar Demanda')
+                    ->modalDescription('Tem certeza que deseja solicitar esta demanda? A demanda será enviada para análise.')
+                    ->modalSubmitActionLabel('Sim, Solicitar')
+                    ->action(function (Demanda $record) {
+                        $statusSolicitada = Status::where('nome', 'Solicitada')->first();
+                        if ($statusSolicitada) {
+                            $record->update(['status_id' => $statusSolicitada->id]);
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->title('Demanda solicitada com sucesso!')
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->visible(function (Demanda $record) use ($user) {
+                        if (!$user || !$user->isUsuario()) {
+                            return false;
+                        }
+                        $record->loadMissing('status');
+                        return $record->solicitante_id === $user->id 
+                            && $record->status 
+                            && $record->status->nome === 'Rascunho';
+                    }),
+                // Ação para usuários comuns: Cancelar Solicitação
+                Tables\Actions\Action::make('cancelarSolicitacao')
+                    ->label('Cancelar Solicitação')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Cancelar Solicitação')
+                    ->modalDescription('Tem certeza que deseja cancelar a solicitação desta demanda? A demanda voltará para o status "Rascunho" e você poderá editá-la novamente.')
+                    ->modalSubmitActionLabel('Sim, Cancelar Solicitação')
+                    ->action(function (Demanda $record) {
+                        $statusRascunho = Status::where('nome', 'Rascunho')->first();
+                        if ($statusRascunho) {
+                            $record->update(['status_id' => $statusRascunho->id]);
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->title('Solicitação cancelada com sucesso!')
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->visible(function (Demanda $record) use ($user) {
+                        if (!$user || !$user->isUsuario()) {
+                            return false;
+                        }
+                        $record->loadMissing('status');
+                        return $record->solicitante_id === $user->id 
+                            && $record->status 
+                            && $record->status->nome === 'Solicitada';
+                    }),
+                // Ação para Admin/Analista: Avançar Status
+                Tables\Actions\Action::make('avancarStatus')
+                    ->label(function (Demanda $record) {
+                        $record->loadMissing('status');
+                        if (!$record->status) {
+                            return 'Avançar Status';
+                        }
+                        $statuses = Status::orderBy('ordem')->get();
+                        $statusAtualObj = $statuses->firstWhere('nome', $record->status->nome);
+                        if ($statusAtualObj) {
+                            $proximoStatus = $statuses->firstWhere('ordem', $statusAtualObj->ordem + 1);
+                            if ($proximoStatus && $proximoStatus->nome !== 'Cancelada') {
+                                return 'Avançar para ' . $proximoStatus->nome;
+                            }
+                        }
+                        return 'Avançar Status';
+                    })
+                    ->icon('heroicon-o-arrow-right')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Avançar Status')
+                    ->modalDescription(function (Demanda $record) {
+                        $record->loadMissing('status');
+                        if (!$record->status) {
+                            return '';
+                        }
+                        $statuses = Status::orderBy('ordem')->get();
+                        $statusAtualObj = $statuses->firstWhere('nome', $record->status->nome);
+                        if ($statusAtualObj) {
+                            $proximoStatus = $statuses->firstWhere('ordem', $statusAtualObj->ordem + 1);
+                            if ($proximoStatus && $proximoStatus->nome !== 'Cancelada') {
+                                return "Tem certeza que deseja avançar esta demanda para o status '{$proximoStatus->nome}'?";
+                            }
+                        }
+                        return '';
+                    })
+                    ->modalSubmitActionLabel('Sim, Avançar')
+                    ->action(function (Demanda $record) {
+                        $record->loadMissing('status');
+                        if (!$record->status) {
+                            return;
+                        }
+                        $statuses = Status::orderBy('ordem')->get();
+                        $statusAtualObj = $statuses->firstWhere('nome', $record->status->nome);
+                        if ($statusAtualObj) {
+                            $proximoStatus = $statuses->firstWhere('ordem', $statusAtualObj->ordem + 1);
+                            if ($proximoStatus && $proximoStatus->nome !== 'Cancelada') {
+                                $record->update(['status_id' => $proximoStatus->id]);
+                                
+                                \Filament\Notifications\Notification::make()
+                                    ->title("Status alterado para '{$proximoStatus->nome}' com sucesso!")
+                                    ->success()
+                                    ->send();
+                            }
+                        }
+                    })
+                    ->visible(function (Demanda $record) use ($user) {
+                        if (!$user) {
+                            return false;
+                        }
+                        $isAdmin = $user->canManageSystem();
+                        $isAnalista = $user->isAnalista();
+                        
+                        if (!$isAdmin && !$isAnalista) {
+                            return false;
+                        }
+                        
+                        if ($isAnalista) {
+                            $projetosIds = $user->projetos()->pluck('projetos.id');
+                            if (!in_array($record->projeto_id, $projetosIds->toArray())) {
+                                return false;
+                            }
+                        }
+                        
+                        $record->loadMissing('status');
+                        if (!$record->status) {
+                            return false;
+                        }
+                        
+                        $statuses = Status::orderBy('ordem')->get();
+                        $statusAtualObj = $statuses->firstWhere('nome', $record->status->nome);
+                        if ($statusAtualObj) {
+                            $proximoStatus = $statuses->firstWhere('ordem', $statusAtualObj->ordem + 1);
+                            return $proximoStatus && $proximoStatus->nome !== 'Cancelada';
+                        }
+                        
+                        return false;
+                    }),
+                // Ação para Admin/Analista: Voltar Status
+                Tables\Actions\Action::make('voltarStatus')
+                    ->label(function (Demanda $record) {
+                        $record->loadMissing('status');
+                        if (!$record->status) {
+                            return 'Voltar Status';
+                        }
+                        $statuses = Status::orderBy('ordem')->get();
+                        $statusAtualObj = $statuses->firstWhere('nome', $record->status->nome);
+                        if ($statusAtualObj) {
+                            $statusAnterior = $statuses->firstWhere('ordem', $statusAtualObj->ordem - 1);
+                            if ($statusAnterior && $statusAnterior->nome !== 'Cancelada') {
+                                return 'Voltar para ' . $statusAnterior->nome;
+                            }
+                        }
+                        return 'Voltar Status';
+                    })
+                    ->icon('heroicon-o-arrow-left')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Voltar Status')
+                    ->modalDescription(function (Demanda $record) {
+                        $record->loadMissing('status');
+                        if (!$record->status) {
+                            return '';
+                        }
+                        $statuses = Status::orderBy('ordem')->get();
+                        $statusAtualObj = $statuses->firstWhere('nome', $record->status->nome);
+                        if ($statusAtualObj) {
+                            $statusAnterior = $statuses->firstWhere('ordem', $statusAtualObj->ordem - 1);
+                            if ($statusAnterior && $statusAnterior->nome !== 'Cancelada') {
+                                return "Tem certeza que deseja voltar esta demanda para o status '{$statusAnterior->nome}'?";
+                            }
+                        }
+                        return '';
+                    })
+                    ->modalSubmitActionLabel('Sim, Voltar')
+                    ->action(function (Demanda $record) {
+                        $record->loadMissing('status');
+                        if (!$record->status) {
+                            return;
+                        }
+                        $statuses = Status::orderBy('ordem')->get();
+                        $statusAtualObj = $statuses->firstWhere('nome', $record->status->nome);
+                        if ($statusAtualObj) {
+                            $statusAnterior = $statuses->firstWhere('ordem', $statusAtualObj->ordem - 1);
+                            if ($statusAnterior && $statusAnterior->nome !== 'Cancelada') {
+                                $record->update(['status_id' => $statusAnterior->id]);
+                                
+                                \Filament\Notifications\Notification::make()
+                                    ->title("Status alterado para '{$statusAnterior->nome}' com sucesso!")
+                                    ->success()
+                                    ->send();
+                            }
+                        }
+                    })
+                    ->visible(function (Demanda $record) use ($user) {
+                        if (!$user) {
+                            return false;
+                        }
+                        $isAdmin = $user->canManageSystem();
+                        $isAnalista = $user->isAnalista();
+                        
+                        if (!$isAdmin && !$isAnalista) {
+                            return false;
+                        }
+                        
+                        if ($isAnalista) {
+                            $projetosIds = $user->projetos()->pluck('projetos.id');
+                            if (!in_array($record->projeto_id, $projetosIds->toArray())) {
+                                return false;
+                            }
+                        }
+                        
+                        $record->loadMissing('status');
+                        if (!$record->status) {
+                            return false;
+                        }
+                        
+                        $statuses = Status::orderBy('ordem')->get();
+                        $statusAtualObj = $statuses->firstWhere('nome', $record->status->nome);
+                        if ($statusAtualObj) {
+                            $statusAnterior = $statuses->firstWhere('ordem', $statusAtualObj->ordem - 1);
+                            return $statusAnterior && $statusAnterior->nome !== 'Cancelada';
+                        }
+                        
+                        return false;
+                    }),
+                // Ação para Admin/Analista: Cancelar Demanda
+                Tables\Actions\Action::make('cancelarDemanda')
+                    ->label('Cancelar Demanda')
+                    ->icon('heroicon-o-x-mark')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Cancelar Demanda')
+                    ->modalDescription('Tem certeza que deseja cancelar esta demanda? Esta ação pode ser revertida posteriormente.')
+                    ->modalSubmitActionLabel('Sim, Cancelar')
+                    ->action(function (Demanda $record) {
+                        $statusCancelada = Status::where('nome', 'Cancelada')->first();
+                        if ($statusCancelada) {
+                            $record->update(['status_id' => $statusCancelada->id]);
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->title('Demanda cancelada com sucesso!')
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->visible(function (Demanda $record) use ($user) {
+                        if (!$user) {
+                            return false;
+                        }
+                        $isAdmin = $user->canManageSystem();
+                        $isAnalista = $user->isAnalista();
+                        
+                        if (!$isAdmin && !$isAnalista) {
+                            return false;
+                        }
+                        
+                        if ($isAnalista) {
+                            $projetosIds = $user->projetos()->pluck('projetos.id');
+                            if (!in_array($record->projeto_id, $projetosIds->toArray())) {
+                                return false;
+                            }
+                        }
+                        
+                        $record->loadMissing('status');
+                        return $record->status && $record->status->nome !== 'Cancelada';
+                    }),
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn(Demanda $record) => static::canDelete($record)),
+                ])
+                    ->label('Ações')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->size('sm')
+                    ->color('gray'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

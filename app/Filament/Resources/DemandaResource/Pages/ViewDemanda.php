@@ -14,25 +14,32 @@ class ViewDemanda extends ViewRecord
 
     public function getTitle(): string
     {
-        return 'Detalhes da Demanda';
+        return '';
     }
 
     protected function getHeaderActions(): array
     {
         $user = Auth::user();
-        $demanda = $this->record->loadMissing(['status', 'projeto']);
-
+        $demanda = $this->record->load('status');
+        
         $actions = [
-            Actions\EditAction::make()
-                ->authorize(function () use ($demanda) {
-                    return DemandaResource::canEdit($demanda);
-                }),
+            Actions\EditAction::make(),
         ];
 
-        // Adicionar botões para usuários comuns
-        if ($user && $user->isUsuario() && $demanda->solicitante_id === $user->id) {
+        if (!$user || !$demanda->status) {
+            return $actions;
+        }
+
+        $statusAtual = $demanda->status->nome;
+        $isAdmin = $user->canManageSystem();
+        $isAnalista = $user->isAnalista();
+        $isUsuario = $user->isUsuario();
+        $isProprioUsuario = $isUsuario && $demanda->solicitante_id === $user->id;
+
+        // Botões para usuários comuns (apenas suas próprias demandas)
+        if ($isProprioUsuario) {
             // Botão "Solicitar" quando a demanda estiver em "Rascunho"
-            if ($demanda->status && $demanda->status->nome === 'Rascunho') {
+            if ($statusAtual === 'Rascunho') {
                 $actions[] = Actions\Action::make('solicitar')
                     ->label('Solicitar')
                     ->icon('heroicon-o-paper-airplane')
@@ -46,19 +53,19 @@ class ViewDemanda extends ViewRecord
                         $statusSolicitada = Status::where('nome', 'Solicitada')->first();
                         if ($statusSolicitada) {
                             $demanda->update(['status_id' => $statusSolicitada->id]);
-
+                            
                             \Filament\Notifications\Notification::make()
                                 ->title('Demanda solicitada com sucesso!')
                                 ->success()
                                 ->send();
-
+                            
                             $this->redirect(static::getResource()::getUrl('view', ['record' => $demanda]));
                         }
                     });
             }
-
+            
             // Botão "Cancelar Solicitação" quando a demanda estiver em "Solicitada"
-            if ($demanda->status && $demanda->status->nome === 'Solicitada') {
+            if ($statusAtual === 'Solicitada') {
                 $actions[] = Actions\Action::make('cancelarSolicitacao')
                     ->label('Cancelar Solicitação')
                     ->icon('heroicon-o-x-circle')
@@ -72,12 +79,108 @@ class ViewDemanda extends ViewRecord
                         $statusRascunho = Status::where('nome', 'Rascunho')->first();
                         if ($statusRascunho) {
                             $demanda->update(['status_id' => $statusRascunho->id]);
-
+                            
                             \Filament\Notifications\Notification::make()
                                 ->title('Solicitação cancelada com sucesso!')
                                 ->success()
                                 ->send();
+                            
+                            $this->redirect(static::getResource()::getUrl('view', ['record' => $demanda]));
+                        }
+                    });
+            }
+        }
 
+        // Botões para Administradores e Analistas
+        if ($isAdmin || $isAnalista) {
+            // Verificar se analista tem acesso ao projeto da demanda
+            if ($isAnalista) {
+                $projetosIds = $user->projetos()->pluck('projetos.id');
+                if (!in_array($demanda->projeto_id, $projetosIds->toArray())) {
+                    return $actions; // Analista sem acesso ao projeto não vê botões
+                }
+            }
+
+            // Botão para avançar status (próximo status na ordem)
+            $statuses = Status::orderBy('ordem')->get();
+            $statusAtualObj = $statuses->firstWhere('nome', $statusAtual);
+            
+            if ($statusAtualObj) {
+                $ordemAtual = $statusAtualObj->ordem;
+                $proximoStatus = $statuses->firstWhere('ordem', $ordemAtual + 1);
+                
+                if ($proximoStatus && $proximoStatus->nome !== 'Cancelada') {
+                    $actions[] = Actions\Action::make('avancarStatus')
+                        ->label('Avançar para ' . $proximoStatus->nome)
+                        ->icon('heroicon-o-arrow-right')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading('Avançar Status')
+                        ->modalDescription("Tem certeza que deseja avançar esta demanda para o status '{$proximoStatus->nome}'?")
+                        ->modalSubmitActionLabel('Sim, Avançar')
+                        ->action(function () use ($proximoStatus) {
+                            $demanda = $this->record;
+                            $demanda->update(['status_id' => $proximoStatus->id]);
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->title("Status alterado para '{$proximoStatus->nome}' com sucesso!")
+                                ->success()
+                                ->send();
+                            
+                            $this->redirect(static::getResource()::getUrl('view', ['record' => $demanda]));
+                        });
+                }
+            }
+
+            // Botão para voltar status (status anterior na ordem)
+            if ($statusAtualObj) {
+                $ordemAtual = $statusAtualObj->ordem;
+                $statusAnterior = $statuses->firstWhere('ordem', $ordemAtual - 1);
+                
+                if ($statusAnterior && $statusAnterior->nome !== 'Cancelada') {
+                    $actions[] = Actions\Action::make('voltarStatus')
+                        ->label('Voltar para ' . $statusAnterior->nome)
+                        ->icon('heroicon-o-arrow-left')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->modalHeading('Voltar Status')
+                        ->modalDescription("Tem certeza que deseja voltar esta demanda para o status '{$statusAnterior->nome}'?")
+                        ->modalSubmitActionLabel('Sim, Voltar')
+                        ->action(function () use ($statusAnterior) {
+                            $demanda = $this->record;
+                            $demanda->update(['status_id' => $statusAnterior->id]);
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->title("Status alterado para '{$statusAnterior->nome}' com sucesso!")
+                                ->success()
+                                ->send();
+                            
+                            $this->redirect(static::getResource()::getUrl('view', ['record' => $demanda]));
+                        });
+                }
+            }
+
+            // Botão para cancelar demanda (apenas se não estiver cancelada)
+            if ($statusAtual !== 'Cancelada') {
+                $actions[] = Actions\Action::make('cancelarDemanda')
+                    ->label('Cancelar Demanda')
+                    ->icon('heroicon-o-x-mark')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Cancelar Demanda')
+                    ->modalDescription('Tem certeza que deseja cancelar esta demanda? Esta ação pode ser revertida posteriormente.')
+                    ->modalSubmitActionLabel('Sim, Cancelar')
+                    ->action(function () {
+                        $demanda = $this->record;
+                        $statusCancelada = Status::where('nome', 'Cancelada')->first();
+                        if ($statusCancelada) {
+                            $demanda->update(['status_id' => $statusCancelada->id]);
+                            
+                            \Filament\Notifications\Notification::make()
+                                ->title('Demanda cancelada com sucesso!')
+                                ->success()
+                                ->send();
+                            
                             $this->redirect(static::getResource()::getUrl('view', ['record' => $demanda]));
                         }
                     });

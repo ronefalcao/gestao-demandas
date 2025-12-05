@@ -20,13 +20,34 @@ return [
             'throw' => false,
         ],
 
+        's3' => [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+        ],
+
     ],
 
     'links' => [
         public_path('storage') => storage_path('app/public'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | S3 Base Path
+    |--------------------------------------------------------------------------
+    |
+    | Caminho base onde os arquivos serão armazenados no S3.
+    | Exemplo: "gestor/demandas" resultará em "gestor/demandas/{id}/arquivos/"
+    |
+    */
+
+    's3_path' => env('S3_PATH', 'gestor/demandas'),
+
 ];
-
-
-

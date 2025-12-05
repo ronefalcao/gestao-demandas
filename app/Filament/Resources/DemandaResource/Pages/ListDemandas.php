@@ -24,6 +24,9 @@ class ListDemandas extends ListRecords
         $user = Auth::user();
         $query = parent::getTableQuery();
 
+        // Carregar relacionamentos necessários para evitar N+1 queries
+        $query->with('status');
+
         // Filtrar demandas baseado no tipo de usuário e projetos associados
         if (!$user->isAdmin()) {
             $projetosIds = $user->projetos()->pluck('projetos.id');
