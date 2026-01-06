@@ -14,6 +14,12 @@ class ListDemandas extends ListRecords
     
     protected static string $view = 'filament-panels::resources.pages.list-demandas';
 
+    public static function shouldRegisterNavigation(array $parameters = []): bool
+    {
+        // Ocultar a página index padrão, apenas as páginas customizadas aparecerão
+        return false;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

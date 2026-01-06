@@ -12,6 +12,8 @@ class ViewDemanda extends ViewRecord
 {
     protected static string $resource = DemandaResource::class;
 
+    protected static string $view = 'filament.resources.pages.view-demanda';
+
     public function getTitle(): string
     {
         return '';
@@ -20,12 +22,44 @@ class ViewDemanda extends ViewRecord
     protected function getHeaderActions(): array
     {
         $user = Auth::user();
-        $demanda = $this->record->load('status');
+        $demanda = $this->record;
         
+        // Carregar relacionamentos necessários
+        $demanda->loadMissing(['status', 'projeto']);
+        
+        // Determinar para qual lista voltar baseado no status
+        $urlVoltar = static::getResource()::getUrl('abertas');
+        if ($demanda->status) {
+            $statusNome = $demanda->status->nome;
+            if (in_array($statusNome, ['Backlog', 'Em Desenvolvimento', 'Em Teste'])) {
+                $urlVoltar = static::getResource()::getUrl('desenvolvimento');
+            } elseif (in_array($statusNome, ['Cancelada', 'Concluído', 'Homologada'])) {
+                $urlVoltar = static::getResource()::getUrl('concluidas');
+            } elseif ($statusNome === 'Publicada') {
+                $urlVoltar = static::getResource()::getUrl('publicadas');
+            }
+        }
+        
+        // Inicializar array de ações - SEMPRE começar com o botão Voltar
         $actions = [
-            Actions\EditAction::make(),
+            // Botão Voltar - sempre visível para todos
+            Actions\Action::make('voltar')
+                ->label('Voltar')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->url($urlVoltar),
+            
+            // Botão Atualizar (Editar) - verificar permissão
+            Actions\EditAction::make()
+                ->label('Atualizar')
+                ->visible(fn() => DemandaResource::canEdit($demanda)),
+            
+            // Botão Excluir - verificar permissão
+            Actions\DeleteAction::make()
+                ->visible(fn() => DemandaResource::canDelete($demanda)),
         ];
 
+        // Se não houver usuário ou status, retornar apenas os botões básicos
         if (!$user || !$demanda->status) {
             return $actions;
         }

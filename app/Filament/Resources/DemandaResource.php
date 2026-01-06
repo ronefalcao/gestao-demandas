@@ -26,7 +26,15 @@ class DemandaResource extends Resource
 
     protected static ?string $navigationLabel = 'Demandas';
 
+    protected static ?string $navigationGroup = 'Demandas';
+
     protected static ?int $navigationSort = 7;
+
+    public static function shouldRegisterNavigation(array $parameters = []): bool
+    {
+        // Ocultar o recurso principal, apenas as páginas customizadas aparecerão
+        return false;
+    }
 
     public static function canViewAny(): bool
     {
@@ -277,6 +285,7 @@ class DemandaResource extends Resource
             Tables\Columns\TextColumn::make('descricao')
                 ->label('Descrição')
                 ->limit(50)
+                ->tooltip(fn($record) => $record->descricao)
                 ->searchable()
                 ->toggleable(),
         ];
@@ -305,6 +314,7 @@ class DemandaResource extends Resource
         return $table
             ->recordUrl(fn(Demanda $record): string => static::getUrl('view', ['record' => $record]))
             ->columns($columns)
+            ->actionsPosition(\Filament\Tables\Enums\ActionsPosition::BeforeColumns)
             ->filters([
                 Tables\Filters\SelectFilter::make('status_id')
                     ->label('Status')
@@ -648,7 +658,11 @@ class DemandaResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDemandas::route('/'),
+            'index' => Pages\ListDemandasAbertas::route('/'),
+            'abertas' => Pages\ListDemandasAbertas::route('/abertas'),
+            'desenvolvimento' => Pages\ListDemandasDesenvolvimento::route('/desenvolvimento'),
+            'concluidas' => Pages\ListDemandasConcluidas::route('/concluidas'),
+            'publicadas' => Pages\ListDemandasPublicadas::route('/publicadas'),
             'create' => Pages\CreateDemanda::route('/create'),
             'view' => Pages\ViewDemanda::route('/{record}'),
             'edit' => Pages\EditDemanda::route('/{record}/edit'),

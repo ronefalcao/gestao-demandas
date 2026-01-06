@@ -43,6 +43,19 @@ class DemandasRecentesWidget extends BaseWidget
         // Excluir rascunhos de outros usuários (apenas o criador vê seus rascunhos)
         $baseQuery->excludeRascunhosFromOthers($user->id);
 
+        // Filtrar por status baseado no tipo de usuário
+        if ($user->isUsuario()) {
+            // Regra 1: Tipo usuário -> mostra apenas demandas com status "Rascunho"
+            $baseQuery->whereHas('status', function ($query) {
+                $query->where('nome', 'Rascunho');
+            });
+        } else {
+            // Regra 2: Outros tipos -> mostra apenas demandas com status "Solicitada"
+            $baseQuery->whereHas('status', function ($query) {
+                $query->where('nome', 'Solicitada');
+            });
+        }
+
         $columns = [
             Tables\Columns\TextColumn::make('numero')
                 ->label('Número')
@@ -90,6 +103,7 @@ class DemandasRecentesWidget extends BaseWidget
             Tables\Columns\TextColumn::make('descricao')
                 ->label('Descrição')
                 ->limit(60)
+                ->tooltip(fn($record) => $record->descricao)
                 ->searchable(),
         ];
 
@@ -104,6 +118,10 @@ class DemandasRecentesWidget extends BaseWidget
             ->query($baseQuery->with(['cliente', 'projeto', 'solicitante', 'responsavel', 'status']))
             ->recordUrl(fn(Demanda $record): string => \App\Filament\Resources\DemandaResource::getUrl('view', ['record' => $record]))
             ->columns($columns)
+            ->actions([
+                Tables\Actions\ViewAction::make(),
+            ])
+            ->actionsPosition(\Filament\Tables\Enums\ActionsPosition::BeforeColumns)
             ->defaultSort('created_at', 'desc')
             ->paginated([10]);
     }
