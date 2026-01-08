@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\DemandaResource\RelationManagers;
 
+use App\Http\Services\S3Service;
 use App\Models\DemandaArquivo;
 use App\Models\User;
 use Filament\Forms;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Log;
 
 class ArquivosRelationManager extends RelationManager
 {
@@ -28,10 +30,23 @@ class ArquivosRelationManager extends RelationManager
                 Forms\Components\FileUpload::make('arquivo_temp')
                     ->label('Arquivo')
                     ->required()
-                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'video/mp4'])
+                    ->acceptedFileTypes([
+                        'application/pdf',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.ms-excel',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'application/vnd.ms-powerpoint',
+                        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                        'image/jpeg',
+                        'image/jpg',
+                        'image/png',
+                        'image/vnd.adobe.photoshop',
+                        'video/mp4',
+                    ])
                     ->maxSize(10240) // 10MB
                     ->disk('public')
-                    ->directory('demandas')
+                    ->directory('temp')
                     ->visibility('public')
                     ->storeFileNamesIn('nome_original_temp')
                     ->dehydrated(false),
@@ -125,29 +140,92 @@ class ArquivosRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data): array {
                         $caminho = $data['arquivo_temp'] ?? null;
                         if (!$caminho) {
-                            return $data;
+                            throw new \Exception('Arquivo não foi enviado corretamente.');
                         }
 
+                        // Obter o arquivo do storage temporário
+                        $fullPath = storage_path('app/public/' . $caminho);
+                        if (!file_exists($fullPath)) {
+                            throw new \Exception('Arquivo temporário não encontrado.');
+                        }
+
+                        // Obter nome original do arquivo
                         $originalName = $data['nome_original_temp'] ?? basename($caminho);
-                        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-
-                        // Renomear arquivo para nome único
-                        $fileName = uniqid() . '_' . time() . '.' . $extension;
-                        $newPath = 'demandas/' . $fileName;
-
-                        // Mover arquivo para o novo nome
-                        if (Storage::disk('public')->exists($caminho)) {
-                            Storage::disk('public')->move($caminho, $newPath);
+                        if (empty($originalName)) {
+                            $originalName = basename($caminho);
+                        }
+                        
+                        // Garantir que temos um nome original válido
+                        if (empty($originalName) || $originalName === '.' || $originalName === '..') {
+                            // Tentar extrair do caminho
+                            $pathInfo = pathinfo($caminho);
+                            $originalName = $pathInfo['filename'] ?? 'arquivo_' . time();
+                            if (isset($pathInfo['extension'])) {
+                                $originalName .= '.' . $pathInfo['extension'];
+                            } else {
+                                $originalName .= '.pdf'; // fallback
+                            }
                         }
 
-                        return [
-                            'demanda_id' => $this->getOwnerRecord()->id,
-                            'nome_original' => $originalName,
-                            'nome_arquivo' => $fileName,
-                            'caminho' => $newPath,
-                            'tipo' => $extension,
-                            'tamanho' => Storage::disk('public')->exists($newPath) ? Storage::disk('public')->size($newPath) : 0,
-                        ];
+                        // Obter informações do arquivo
+                        $mimeType = mime_content_type($fullPath) ?: 'application/octet-stream';
+
+                        // Criar UploadedFile a partir do arquivo temporário
+                        $uploadedFile = new \Illuminate\Http\UploadedFile(
+                            $fullPath,
+                            $originalName,
+                            $mimeType,
+                            UPLOAD_ERR_OK,
+                            false // não é test mode, é um arquivo real
+                        );
+
+                        try {
+                            // Usar S3Service para fazer upload (como no DemandaController)
+                            $s3Service = new S3Service();
+                            $demanda = $this->getOwnerRecord();
+                            $pasta = $demanda->id . '/arquivos';
+                            $resultado = $s3Service->uploadFormData($uploadedFile, $pasta);
+
+                            // Validar que o resultado contém todos os campos obrigatórios
+                            $requiredFields = ['nome_original', 'nome', 'caminho', 'extensao', 'tamanho'];
+                            foreach ($requiredFields as $field) {
+                                if (!isset($resultado[$field]) || $resultado[$field] === null || $resultado[$field] === '') {
+                                    throw new \Exception("Campo obrigatório '{$field}' não foi retornado pelo serviço de upload ou está vazio.");
+                                }
+                            }
+
+                            // Garantir que nome_original não está vazio
+                            if (empty($resultado['nome_original'])) {
+                                $resultado['nome_original'] = $originalName;
+                            }
+
+                            // Limpar arquivo temporário
+                            if (Storage::disk('public')->exists($caminho)) {
+                                Storage::disk('public')->delete($caminho);
+                            }
+
+                            return [
+                                'demanda_id' => $demanda->id,
+                                'nome_original' => $resultado['nome_original'],
+                                'nome_arquivo' => $resultado['nome'],
+                                'caminho' => $resultado['caminho'],
+                                'tipo' => $resultado['extensao'],
+                                'tamanho' => $resultado['tamanho'],
+                            ];
+                        } catch (\Exception $e) {
+                            // Limpar arquivo temporário em caso de erro
+                            if (Storage::disk('public')->exists($caminho)) {
+                                Storage::disk('public')->delete($caminho);
+                            }
+                            Log::error('Erro ao fazer upload de arquivo no RelationManager', [
+                                'erro' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString(),
+                                'demanda_id' => $this->getOwnerRecord()->id,
+                                'arquivo' => $originalName,
+                                'caminho_temp' => $caminho,
+                            ]);
+                            throw new \Exception('Erro ao fazer upload do arquivo: ' . $e->getMessage());
+                        }
                     })
                     ->successNotificationTitle('Arquivo enviado com sucesso!'),
             ])
@@ -174,10 +252,8 @@ class ArquivosRelationManager extends RelationManager
                             ->icon('heroicon-o-arrow-down-tray')
                             ->color('gray')
                             ->action(function (DemandaArquivo $record) {
-                                $file = Storage::disk('public')->get($record->caminho);
-                                $tempPath = sys_get_temp_dir() . '/' . $record->nome_original;
-                                file_put_contents($tempPath, $file);
-                                return Response::download($tempPath, $record->nome_original)->deleteFileAfterSend(true);
+                                // Usar o método do modelo que funciona com S3 e local
+                                return redirect($record->getDownloadUrl(5));
                             }),
                     ]),
                 Tables\Actions\DeleteAction::make()
@@ -200,7 +276,8 @@ class ArquivosRelationManager extends RelationManager
                     })
                     ->successNotificationTitle('Arquivo excluído com sucesso!')
                     ->before(function (DemandaArquivo $record) {
-                        Storage::disk('public')->delete($record->caminho);
+                        // Usar o método do modelo que funciona com S3 e local
+                        $record->deleteFile();
                     }),
             ])
             ->bulkActions([
@@ -225,7 +302,8 @@ class ArquivosRelationManager extends RelationManager
                         })
                         ->before(function ($records) {
                             foreach ($records as $record) {
-                                Storage::disk('public')->delete($record->caminho);
+                                // Usar o método do modelo que funciona com S3 e local
+                                $record->deleteFile();
                             }
                         }),
                 ]),

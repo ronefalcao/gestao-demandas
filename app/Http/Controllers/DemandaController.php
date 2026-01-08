@@ -409,7 +409,7 @@ class DemandaController extends Controller
         }
 
         $request->validate([
-            'arquivo' => 'required|file|mimes:pdf,jpeg,jpg,png,mp4|max:10240', // 10MB max
+            'arquivo' => 'required|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpeg,jpg,png,psd,mp4|max:10240', // 10MB max
         ]);
 
         $arquivo = $request->file('arquivo');
@@ -423,9 +423,14 @@ class DemandaController extends Controller
             // Validar que o resultado contém todos os campos obrigatórios
             $requiredFields = ['nome_original', 'nome', 'caminho', 'extensao', 'tamanho'];
             foreach ($requiredFields as $field) {
-                if (!isset($resultado[$field])) {
-                    throw new \Exception("Campo obrigatório '{$field}' não foi retornado pelo serviço de upload.");
+                if (!isset($resultado[$field]) || $resultado[$field] === null || $resultado[$field] === '') {
+                    throw new \Exception("Campo obrigatório '{$field}' não foi retornado pelo serviço de upload ou está vazio.");
                 }
+            }
+
+            // Garantir que nome_original não está vazio
+            if (empty($resultado['nome_original'])) {
+                $resultado['nome_original'] = $arquivo->getClientOriginalName() ?: 'arquivo_' . time() . '.' . ($resultado['extensao'] ?? 'pdf');
             }
 
             DemandaArquivo::create([
