@@ -43,8 +43,8 @@ class ListDemandasDesenvolvimento extends ListRecords
         // Carregar relacionamentos necessários para evitar N+1 queries
         $query->with('status');
 
-        // Filtrar apenas status "Desenvolvimento" (Backlog, Em Desenvolvimento, Em Teste)
-        $statusDesenvolvimento = Status::whereIn('nome', ['Backlog', 'Em Desenvolvimento', 'Em Teste'])->pluck('id');
+        // Filtrar apenas status "Desenvolvimento" (Backlog, Planejamento, Em Desenvolvimento, Em Teste)
+        $statusDesenvolvimento = Status::whereIn('nome', ['Backlog', 'Planejamento', 'Em Desenvolvimento', 'Em Teste'])->pluck('id');
         $query->whereIn('status_id', $statusDesenvolvimento);
 
         // Filtrar demandas baseado no tipo de usuário e projetos associados
